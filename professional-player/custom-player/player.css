@@ -1,0 +1,548 @@
+/* =============================================================
+   Custom Storyline Player Styles
+   Drop this folder into any Storyline 360 HTML5 output and link
+   it at the very end of story.html (see README.md).
+   Loaded after Storyline's own CSS, so equal-specificity rules win.
+   ============================================================= */
+
+/* Learning Dojo fonts: Space Grotesk (labels, headings), DM Sans (body).
+   Without internet access the player falls back to system fonts. */
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Space+Grotesk:wght@500;600;700&display=swap");
+
+/* ---- Player regions (uncomment / edit to customize) ----------
+
+#wrapper          { }   whole player
+#top-bar          { }   title bar along the top
+#hamburger        { }   menu (sidebar) toggle button
+#sidebar          { }   menu / outline panel
+#outline-content  { }   menu item list
+#frame            { }   area around the slide
+#slide            { }   the slide itself
+#bottom-bar       { }   bottom control bar
+#play-pause       { }   play / pause button
+#seek             { }   seekbar
+#volume           { }   volume button
+#full-screen-toggle { } full-screen button
+#prev, #next      { }   previous / next buttons
+#submit           { }   submit button
+
+--------------------------------------------------------------- */
+
+
+/* ---- Learning Dojo theme tokens -------------------------------
+   Light product ramp from the Learning Dojo apps (the dark surface
+   inverted). Change a value here to re-theme the whole player.
+
+   Dark surface values, to switch back:
+   background #121212, sidebar #141414, card #1a1a1a,
+   accent #212121, muted #262626, border #292929,
+   foreground #f2f2f2, secondary-fg #d9d9d9, muted-fg #8c8c8c,
+   primary #3a72e4, primary-hover rgba(58,114,228,0.9),
+   backdrop rgba(0,0,0,0.6)
+   --------------------------------------------------------------- */
+
+.custom-player {
+  --ld-background: #f4f4f5;        /* page */
+  --ld-sidebar: #ffffff;           /* menu panel */
+  --ld-card: #ffffff;              /* control bar, popups */
+  --ld-accent: #ebebed;            /* hover, selected item */
+  --ld-muted: #e4e4e7;             /* tracks */
+  --ld-border: #dedee1;            /* 1px hairlines */
+  --ld-foreground: #121212;        /* main text */
+  --ld-secondary-fg: #3f3f46;      /* icons, menu items */
+  --ld-muted-fg: #6b6b70;          /* labels, secondary text */
+  --ld-primary: #2f62d6;           /* brand blue */
+  --ld-primary-hover: #2853b6;     /* primary, slightly darker */
+  --ld-primary-fg: #ffffff;
+  --ld-backdrop: rgba(18, 18, 18, 0.4);  /* behind the open menu */
+  --ld-font-display: "Space Grotesk", system-ui, sans-serif;
+  --ld-font-body: "DM Sans", system-ui, sans-serif;
+  --ld-radius: 8px;
+  --ld-radius-md: 6px;
+  --ld-fast: 150ms;
+}
+
+
+/* ---- Surfaces --------------------------------------------------
+   Flat page, opaque bars, hairline borders, no shadows.
+   --------------------------------------------------------------- */
+
+.custom-player #frame {
+  background-color: var(--ld-background) !important;
+}
+
+.custom-player #top-bar {
+  background-color: var(--ld-background) !important;
+  border-bottom: 1px solid var(--ld-border);
+  box-sizing: border-box;
+}
+
+.custom-player #bottom-bar {
+  background-color: var(--ld-card) !important;
+  border-top: 1px solid var(--ld-border);
+  box-sizing: border-box;
+}
+
+/* Player frame: 1px border, 8px radius around the slide */
+.custom-player #slide {
+  border-radius: var(--ld-radius);
+  box-shadow: 0 0 0 1px var(--ld-border);
+}
+
+
+/* ---- Type ------------------------------------------------------ */
+
+.custom-player #top-bar,
+.custom-player #bottom-bar,
+.custom-player #sidebar {
+  font-family: var(--ld-font-body) !important;
+}
+
+/* Course title: uppercase Space Grotesk, the house heading style */
+.custom-player #top-bar .presentation-title {
+  font-family: var(--ld-font-display) !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
+  color: var(--ld-foreground) !important;
+}
+
+
+/* ---- Control buttons -------------------------------------------
+   Ghost buttons: hover is a color change only, no lift or scale.
+   --------------------------------------------------------------- */
+
+.custom-player #bottom-bar .cs-button,
+.custom-player #hamburger {
+  border-radius: var(--ld-radius-md) !important;
+  transition: background-color var(--ld-fast), color var(--ld-fast) !important;
+}
+
+/* Icons follow the button's text color */
+.custom-player #bottom-bar .cs-button {
+  color: var(--ld-secondary-fg) !important;
+}
+
+.custom-player #bottom-bar .cs-button:hover {
+  background-color: var(--ld-accent) !important;
+}
+
+.custom-player #bottom-bar .cs-button:hover {
+  color: var(--ld-foreground) !important;
+}
+
+/* Lucide icons (swapped in by player.js): 2px stroke, no fill */
+.custom-player #wrapper svg[data-cp-icon],
+.custom-player #wrapper svg[data-cp-icon] * {
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2px !important;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Storyline icons not swapped (fallback): solid fill */
+.custom-player #bottom-bar .cs-icon:not([data-cp-icon]) * {
+  fill: currentColor !important;
+}
+
+/* Menu button: the hidden original icon sets the animated bars' color.
+   Hover changes the icon color only, no background. */
+.custom-player #hamburger {
+  background-color: transparent !important;
+}
+
+.custom-player #hamburger svg path {
+  fill: var(--ld-secondary-fg) !important;
+}
+
+.custom-player #hamburger:hover svg path {
+  fill: var(--ld-primary) !important;
+}
+
+/* Focus ring: 2px brand blue, 2px offset. Never removed. */
+.custom-player #wrapper button:focus-visible,
+.custom-player #wrapper [tabindex]:focus-visible {
+  outline: 2px solid var(--ld-primary) !important;
+  outline-offset: 2px !important;
+}
+
+
+/* ---- Prev / Next -----------------------------------------------
+   Next is the primary action (blue), Prev is a ghost button.
+   Labels: Space Grotesk 600, uppercase, 0.05em tracking.
+   --------------------------------------------------------------- */
+
+.custom-player #prev,
+.custom-player #next {
+  border: none !important;
+  border-radius: var(--ld-radius-md) !important;
+  font-family: var(--ld-font-display) !important;
+  transition: background-color var(--ld-fast), color var(--ld-fast) !important;
+}
+
+.custom-player #prev .text,
+.custom-player #next .text {
+  font-family: var(--ld-font-display) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.custom-player #prev {
+  background-color: transparent !important;
+  color: var(--ld-secondary-fg) !important;
+}
+
+.custom-player #prev:hover {
+  background-color: var(--ld-accent) !important;
+  color: var(--ld-foreground) !important;
+}
+
+.custom-player #next {
+  background-color: var(--ld-primary) !important;
+  color: var(--ld-primary-fg) !important;
+}
+
+/* #bottom-bar in the selector so this outranks the ghost-button hover */
+.custom-player #bottom-bar #next:hover {
+  background-color: var(--ld-primary-hover) !important;
+  color: var(--ld-primary-fg) !important;
+}
+
+.custom-player #prev .text,
+.custom-player #next .text {
+  color: inherit !important;
+}
+
+.custom-player #bottom-bar #next,
+.custom-player #bottom-bar #next .cs-icon {
+  color: var(--ld-primary-fg) !important;
+}
+
+/* Disabled: 50% opacity */
+.custom-player #prev.cs-disabled,
+.custom-player #next.cs-disabled {
+  opacity: 0.5 !important;
+}
+
+
+/* ---- Seekbar ---------------------------------------------------
+   4px track, 6px on hover, blue progress.
+   --------------------------------------------------------------- */
+
+.custom-player #seek .progress-bar-seek {
+  height: 4px !important;
+  border-radius: 9999px !important;
+  background-color: var(--ld-muted) !important;
+  transition: height var(--ld-fast), margin var(--ld-fast);
+}
+
+.custom-player #seek:hover .progress-bar-seek {
+  height: 6px !important;
+  margin-top: -1px;
+}
+
+.custom-player #seek .progress-bar-fill,
+.custom-player #seek .progress-bar-fill-preview {
+  border-radius: 9999px !important;
+}
+
+/* ID selector outranks Storyline's theme rule for the brand highlight */
+.custom-player #wrapper .cs-brandhighlight-bg {
+  background: var(--ld-primary) !important;
+}
+
+
+/* ---- Volume ---------------------------------------------------- */
+
+.custom-player #volume .volume-track {
+  background-color: var(--ld-muted) !important;
+}
+
+.custom-player #wrapper #volume .volume-progress,
+.custom-player #wrapper #volume .volume-dot {
+  background: var(--ld-foreground) !important;
+}
+
+/* Playback speed popup */
+.custom-player #playback-speed .settings-panel {
+  background-color: var(--ld-card) !important;
+  border: 1px solid var(--ld-border) !important;
+  border-radius: var(--ld-radius) !important;
+  box-shadow: none !important;
+}
+
+.custom-player #playback-speed .settings-panel .title {
+  font-family: var(--ld-font-display) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ld-muted-fg) !important;
+}
+
+.custom-player #playback-speed .menu-choice {
+  color: var(--ld-secondary-fg) !important;
+  border-radius: var(--ld-radius-md);
+}
+
+.custom-player #playback-speed .menu-choice:hover {
+  background-color: var(--ld-accent) !important;
+  color: var(--ld-foreground) !important;
+}
+
+
+/* ---- Menu panel ------------------------------------------------ */
+
+.custom-player #sidebar {
+  background-color: var(--ld-sidebar) !important;
+  border-right: 1px solid var(--ld-border);
+  box-sizing: border-box;
+}
+
+.custom-player.sidebar-right #sidebar {
+  border-right: none;
+  border-left: 1px solid var(--ld-border);
+}
+
+/* "MENU" header: label style */
+.custom-player #tabs {
+  border-bottom: 1px solid var(--ld-border) !important;
+}
+
+.custom-player #tabs .tab {
+  font-family: var(--ld-font-display) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ld-muted-fg) !important;
+}
+
+.custom-player #tabs .tab.cs-selected {
+  color: var(--ld-foreground) !important;
+}
+
+/* Selected tab underline */
+.custom-player #wrapper #tabs .tab::after {
+  background: var(--ld-primary) !important;
+}
+
+/* Storyline's soft shadow along the menu edge; the hairline replaces it */
+.custom-player #wrapper #sidebar::after {
+  display: none !important;
+}
+
+/* Menu items */
+.custom-player #outline-content .listitem {
+  font-family: var(--ld-font-body) !important;
+  font-size: 14px !important;
+  color: var(--ld-secondary-fg) !important;
+  background-image: none !important;
+  border-radius: 0 !important;
+  transition: background-color var(--ld-fast), color var(--ld-fast);
+}
+
+.custom-player #outline-content .listitem:hover {
+  background-color: var(--ld-accent) !important;
+  color: var(--ld-foreground) !important;
+}
+
+/* Storyline marks the focused item with a gray border; hide it on
+   mouse hover and use the brand focus color for keyboard focus. */
+.custom-player #wrapper .cs-listitem:hover {
+  border-color: transparent !important;
+}
+
+.custom-player #wrapper .cs-listitem.hover {
+  border-color: var(--ld-primary) !important;
+  border-radius: 0 !important;
+}
+
+/* Current slide: raised surface, white text, blue marker */
+.custom-player #outline-content .listitem.cs-selected {
+  background-color: var(--ld-accent) !important;
+  color: var(--ld-foreground) !important;
+  box-shadow: inset 4px 0 0 var(--ld-primary);
+}
+
+/* Scene headers: eyebrow label style */
+.custom-player #outline-content .listitem.is-scene {
+  font-family: var(--ld-font-display) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ld-muted-fg) !important;
+}
+
+.custom-player #outline-content .listitem.is-scene:hover {
+  color: var(--ld-foreground) !important;
+}
+
+/* Scene chevron: Storyline rotates it and nudges it 6px down (made for
+   its old triangle). Rotate around the center instead so it lines up
+   with the label: right when collapsed, down when open. */
+.custom-player #outline-content svg.carrot {
+  transform: none !important;
+  transform-origin: center !important;
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.custom-player #outline-content .item-collapsible:not(.item-collapsed) > .listitem svg.carrot {
+  transform: rotate(90deg) !important;
+}
+
+/* Visited checkmarks and scene chevrons */
+.custom-player #outline-content svg.check-icon,
+.custom-player #outline-content svg.carrot,
+.custom-player #outline-content svg.carrot * {
+  color: var(--ld-muted-fg) !important;
+}
+
+
+/* ---- Overlay menu ---------------------------------------------
+   Menu slides over the slide instead of pushing it aside.
+   Toggled by player.js with body.cp-menu-open.
+   --------------------------------------------------------------- */
+
+.custom-player #sidebar {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1) !important;
+  z-index: 50 !important;
+}
+
+/* Menu width: 40% of the player, never narrower than Storyline's
+   default or wider than the player. Storyline fixes the panel and its
+   contents at a pixel width, so the contents stretch to fill it. */
+.custom-player #sidebar {
+  width: 40% !important;
+  min-width: 280px;
+  max-width: 100%;
+}
+
+.custom-player #sidebar #tabs,
+.custom-player #sidebar #sidebar-panels,
+.custom-player #sidebar #sidebar-panels > *,
+.custom-player #sidebar #outline-search-content,
+.custom-player #sidebar #outline-content {
+  width: 100% !important;
+}
+
+/* Closed: menu button sits just past the panel's edge, in the top bar.
+   (Storyline places it at a fixed pixel offset, which would drift.) */
+.custom-player.sidebar-left #hamburger {
+  left: calc(100% + 1px) !important;   /* + the 1px border */
+  transform: none !important;
+}
+
+.custom-player.sidebar-right #hamburger {
+  left: auto !important;
+  right: calc(100% + 1px) !important;
+  transform: none !important;
+}
+
+/* Left-side menu: hidden off the left edge
+   (the menu button is inside #sidebar and sticks out past its edge) */
+.custom-player.sidebar-left #sidebar {
+  transform: translateX(-100%) !important;
+}
+
+/* Right-side menu: hidden off the right edge */
+.custom-player.sidebar-right #sidebar {
+  left: auto !important;
+  right: 0 !important;
+  transform: translateX(100%) !important;
+}
+
+/* Open */
+.custom-player.cp-menu-open #sidebar {
+  transform: translateX(0) !important;
+}
+
+/* Menu button sits outside the panel's edge while closed; once open,
+   the X moves inside the panel's top corner. */
+.custom-player.cp-menu-open.sidebar-left #hamburger {
+  left: auto !important;
+  right: 0 !important;
+  transform: none !important;
+  z-index: 2;
+}
+
+.custom-player.cp-menu-open.sidebar-right #hamburger {
+  left: 0 !important;
+  right: auto !important;
+  transform: none !important;
+  z-index: 2;
+}
+
+/* Storyline hides menu contents while it thinks the menu is closed */
+.custom-player.cp-menu-open #sidebar .view-content {
+  visibility: visible !important;
+}
+
+/* Dims the slide behind the open menu; click to close */
+#cp-menu-backdrop {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  z-index: 49;
+  background: var(--ld-backdrop, rgba(0, 0, 0, 0.6));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.custom-player.cp-menu-open #cp-menu-backdrop {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+
+/* ---- Animated menu icon ---------------------------------------
+   Three bars that turn into an X while the menu is open.
+   Color follows the player theme (set by player.js).
+   --------------------------------------------------------------- */
+
+.custom-player #hamburger .menu-icon-wrapper svg {
+  display: none;
+}
+
+.cp-menu-icon {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+  width: 18px;
+  height: 14px;
+}
+
+.cp-menu-icon span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--cp-icon-color, currentColor);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1), top 200ms cubic-bezier(0, 0, 0.2, 1), opacity 150ms ease, background-color 150ms;
+}
+
+.cp-menu-icon span:nth-child(1) { top: 0; }
+.cp-menu-icon span:nth-child(2) { top: 6px; }
+.cp-menu-icon span:nth-child(3) { top: 12px; }
+
+.custom-player.cp-menu-open .cp-menu-icon span:nth-child(1) {
+  top: 6px;
+  transform: rotate(45deg);
+}
+
+.custom-player.cp-menu-open .cp-menu-icon span:nth-child(2) {
+  opacity: 0;
+}
+
+.custom-player.cp-menu-open .cp-menu-icon span:nth-child(3) {
+  top: 6px;
+  transform: rotate(-45deg);
+}
