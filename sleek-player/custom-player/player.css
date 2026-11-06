@@ -1,0 +1,790 @@
+/* ==========================================================================
+   Sleek player skin for Articulate Storyline (Modern Player)
+   Near-black surfaces, square edges, one acid accent.
+
+   TO USE IN ANY COURSE
+   1. Copy this custom-player folder next to the course's story.html.
+   2. In story.html, add this line right after the output.min.css link:
+        <link rel="stylesheet" href="custom-player/player.css"/>
+   3. And this line right after the bootstrapper.min.js script:
+        <script src="custom-player/player.js"></script>
+   Republishing from Storyline rewrites story.html, so repeat steps 1-3 after.
+   For an LMS publish, add the same lines to index_lms.html.
+
+   Everything is scoped to body.sl-player, which player.js adds on load.
+   Never transform a control directly: the player positions them with inline
+   transforms. Anything that moves is an inner element instead.
+   ========================================================================== */
+
+/* Needs internet. Without it, the font stacks below fall back to system faces. */
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap");
+
+/* --------------------------------------------------------------------------
+   Change these to re-theme the whole skin
+   -------------------------------------------------------------------------- */
+.sl-player {
+  --sl-void: #08090b;                       /* page */
+  --sl-panel: rgba(13, 15, 18, 0.82);       /* menu glass */
+  --sl-raised: #16191d;                     /* popups */
+  --sl-line: rgba(255, 255, 255, 0.1);      /* hairlines */
+  --sl-line-strong: rgba(255, 255, 255, 0.22);
+  --sl-wash: rgba(255, 255, 255, 0.06);     /* hover */
+  --sl-text: #f3f5f6;
+  --sl-text-2: #b3b9bf;                     /* icons, menu items */
+  --sl-text-3: #848b92;                     /* labels, numbers */
+  --sl-accent: #c8ff2e;                     /* the one colour */
+  --sl-accent-ink: #0b0d05;                 /* text on the accent */
+  --sl-backdrop: rgba(4, 5, 7, 0.6);
+  --sl-font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --sl-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sl-chamfer: 8px;
+  --sl-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --sl-fast: 140ms;
+  --sl-slow: 280ms;
+}
+
+
+/* --------------------------------------------------------------------------
+   Surfaces. The bars are see-through, so the grid runs edge to edge.
+   -------------------------------------------------------------------------- */
+.sl-player,
+.sl-player #wrapper {
+  background-color: var(--sl-void) !important;
+}
+
+.sl-player #frame {
+  background-color: var(--sl-void) !important;
+  background-image:
+    radial-gradient(70% 55% at 88% -8%, rgba(200, 255, 46, 0.07), transparent 70%),
+    linear-gradient(rgba(255, 255, 255, 0.026) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.026) 1px, transparent 1px) !important;
+  background-size: 100% 100%, 48px 48px, 48px 48px !important;
+}
+
+/* Mobile view paints the bars with separate layers behind them */
+.sl-player #frame > [class*="ui-bg"] {
+  background: transparent !important;
+}
+
+.sl-player #top-bar,
+.sl-player #bottom-bar {
+  background: transparent !important;
+  box-sizing: border-box;
+  font-family: var(--sl-font) !important;
+}
+
+.sl-player #top-bar {
+  border-bottom: 1px solid var(--sl-line);
+}
+
+.sl-player #slide {
+  border-radius: 0 !important;
+  box-shadow: 0 0 0 1px var(--sl-line), 0 30px 90px rgba(0, 0, 0, 0.65);
+}
+
+/* Crop marks around the slide. player.js keeps this box on top of #slide. */
+#sl-crop {
+  position: absolute;
+  pointer-events: none;
+  --sl-reach: 7px;
+}
+
+#sl-crop span {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 0 solid var(--sl-accent);
+  transition: transform var(--sl-slow) var(--sl-ease);
+}
+
+#sl-crop span:nth-child(1) { left: calc(var(--sl-reach) * -1); top: calc(var(--sl-reach) * -1); border-width: 1px 0 0 1px; }
+#sl-crop span:nth-child(2) { right: calc(var(--sl-reach) * -1); top: calc(var(--sl-reach) * -1); border-width: 1px 1px 0 0; }
+#sl-crop span:nth-child(3) { left: calc(var(--sl-reach) * -1); bottom: calc(var(--sl-reach) * -1); border-width: 0 0 1px 1px; }
+#sl-crop span:nth-child(4) { right: calc(var(--sl-reach) * -1); bottom: calc(var(--sl-reach) * -1); border-width: 0 1px 1px 0; }
+
+/* On each new slide the marks snap in from further out */
+#sl-crop.is-snapping span:nth-child(1) { transform: translate(-7px, -7px); }
+#sl-crop.is-snapping span:nth-child(2) { transform: translate(7px, -7px); }
+#sl-crop.is-snapping span:nth-child(3) { transform: translate(-7px, 7px); }
+#sl-crop.is-snapping span:nth-child(4) { transform: translate(7px, 7px); }
+#sl-crop.is-snapping span { transition: none; }
+
+
+/* --------------------------------------------------------------------------
+   Course title
+   -------------------------------------------------------------------------- */
+.sl-player #top-bar .presentation-title,
+.sl-player #top-bar .presentation-title-text {
+  font-family: var(--sl-font) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.01em;
+  color: var(--sl-text) !important;
+}
+
+/* The player sizes this box for its own font */
+.sl-player #top-bar .presentation-title-text {
+  overflow: visible !important;
+  white-space: nowrap;
+}
+
+
+/* --------------------------------------------------------------------------
+   Course progress: one segment per slide, along the top of the bottom bar
+   -------------------------------------------------------------------------- */
+#sl-rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  display: flex;
+  gap: 2px;
+  height: 2px;
+  pointer-events: none;
+}
+
+#sl-rail i {
+  flex: 1 1 0;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.12);
+  transition: background-color var(--sl-slow) var(--sl-ease), box-shadow var(--sl-slow) var(--sl-ease);
+}
+
+#sl-rail i.is-seen {
+  background: rgba(200, 255, 46, 0.42);
+}
+
+#sl-rail i.is-now {
+  background: var(--sl-accent);
+  box-shadow: 0 0 10px rgba(200, 255, 46, 0.65);
+}
+
+
+/* --------------------------------------------------------------------------
+   Slide readout: 03 / 11 and the slide's name
+   -------------------------------------------------------------------------- */
+#sl-readout {
+  position: absolute;
+  top: 50%;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  white-space: nowrap;
+  pointer-events: none;
+  translate: 0 -50%;
+}
+
+#sl-readout .sl-count {
+  flex: none;
+  font-family: var(--sl-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--sl-text-3);
+}
+
+#sl-readout .sl-count b {
+  font-weight: 500;
+  color: var(--sl-accent);
+}
+
+#sl-readout .sl-name {
+  overflow: hidden;
+  font-family: var(--sl-font);
+  font-size: 13px;
+  color: var(--sl-text-2);
+  text-overflow: ellipsis;
+}
+
+
+/* --------------------------------------------------------------------------
+   Icon buttons
+   -------------------------------------------------------------------------- */
+.sl-player #bottom-bar .cs-button {
+  border-radius: 0 !important;
+  color: var(--sl-text-2) !important;
+  transition: color var(--sl-fast), background-color var(--sl-fast) !important;
+}
+
+.sl-player #bottom-bar .cs-button:hover {
+  color: var(--sl-accent) !important;
+}
+
+/* Lucide icons (swapped in by player.js), drawn with square ends */
+.sl-player #wrapper svg[data-sl-icon],
+.sl-player #wrapper svg[data-sl-icon] * {
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 1.75px !important;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+/* Any icon the swap doesn't cover keeps its shape, in the button's colour */
+.sl-player #bottom-bar .cs-icon:not([data-sl-icon]) * {
+  fill: currentColor !important;
+}
+
+/* Keyboard focus. Never removed. */
+.sl-player #wrapper button:focus-visible,
+.sl-player #wrapper [tabindex]:focus-visible {
+  outline: 2px solid var(--sl-accent) !important;
+  outline-offset: 2px !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Prev / Next / Submit
+   -------------------------------------------------------------------------- */
+.sl-player #prev,
+.sl-player #next,
+.sl-player #submit {
+  border: none !important;
+  border-radius: 0 !important;
+  background-image: none !important;
+  transition: background-color var(--sl-fast), color var(--sl-fast), box-shadow var(--sl-fast) !important;
+}
+
+.sl-player #prev .text,
+.sl-player #next .text,
+.sl-player #submit .text {
+  font-family: var(--sl-mono) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: inherit !important;
+}
+
+/* Prev: outline only */
+.sl-player #bottom-bar #prev {
+  background-color: transparent !important;
+  box-shadow: inset 0 0 0 1px var(--sl-line-strong);
+  color: var(--sl-text-2) !important;
+}
+
+.sl-player #bottom-bar #prev:hover {
+  background-color: var(--sl-wash) !important;
+  box-shadow: inset 0 0 0 1px var(--sl-text-3);
+  color: var(--sl-text) !important;
+}
+
+/* Next and Submit: the accent block, with one corner cut off */
+.sl-player #bottom-bar #next,
+.sl-player #bottom-bar #submit {
+  background-color: var(--sl-accent) !important;
+  color: var(--sl-accent-ink) !important;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--sl-chamfer)), calc(100% - var(--sl-chamfer)) 100%, 0 100%);
+}
+
+.sl-player #bottom-bar #next:hover,
+.sl-player #bottom-bar #submit:hover {
+  background-color: #ffffff !important;
+  color: var(--sl-accent-ink) !important;
+}
+
+/* The cut corner would clip the focus ring, so it goes while focused */
+.sl-player #bottom-bar #next:focus-visible,
+.sl-player #bottom-bar #submit:focus-visible {
+  clip-path: none;
+}
+
+.sl-player #bottom-bar #prev .cs-icon,
+.sl-player #bottom-bar #next .cs-icon,
+.sl-player #bottom-bar #submit .cs-icon {
+  color: inherit !important;
+}
+
+/* Arrows lean the way they're pointing */
+.sl-player #prev .btn-icon,
+.sl-player #next .btn-icon {
+  transition: transform var(--sl-fast) var(--sl-ease);
+}
+
+.sl-player #next:not(.cs-disabled):hover .btn-icon { transform: translateX(3px); }
+.sl-player #prev:not(.cs-disabled):hover .btn-icon { transform: translateX(-3px); }
+
+.sl-player #bottom-bar #prev.cs-disabled,
+.sl-player #bottom-bar #next.cs-disabled,
+.sl-player #bottom-bar #submit.cs-disabled {
+  opacity: 0.32 !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Seekbar: a hairline that thickens under the pointer
+   -------------------------------------------------------------------------- */
+.sl-player #seek .progress-bar-seek {
+  height: 2px !important;
+  border-radius: 0 !important;
+  background-color: rgba(255, 255, 255, 0.16) !important;
+  transition: height var(--sl-fast), margin var(--sl-fast);
+}
+
+.sl-player #seek:hover .progress-bar-seek {
+  height: 4px !important;
+  margin-top: -1px;
+}
+
+.sl-player #seek .progress-bar-fill,
+.sl-player #seek .progress-bar-fill-preview {
+  border-radius: 0 !important;
+}
+
+.sl-player #wrapper .cs-brandhighlight-bg {
+  background: var(--sl-accent) !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Volume and playback speed popups
+   -------------------------------------------------------------------------- */
+.sl-player #volume .slider-bar {
+  border-radius: 0 !important;
+}
+
+.sl-player #volume.open .slider-bar {
+  background-color: var(--sl-raised) !important;
+  box-shadow: 0 0 0 1px var(--sl-line);
+}
+
+.sl-player #volume .volume-track {
+  border-radius: 0 !important;
+  background-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+.sl-player #wrapper #volume .volume-progress {
+  border-radius: 0 !important;
+  background: var(--sl-accent) !important;
+}
+
+.sl-player #wrapper #volume .volume-dot {
+  border-radius: 0 !important;
+  background: var(--sl-text) !important;
+}
+
+.sl-player #playback-speed .settings-panel {
+  border: 1px solid var(--sl-line) !important;
+  border-radius: 0 !important;
+  background-color: var(--sl-raised) !important;
+  box-shadow: none !important;
+}
+
+.sl-player #playback-speed .settings-panel .title {
+  font-family: var(--sl-mono) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sl-text-3) !important;
+}
+
+.sl-player #playback-speed .menu-choice {
+  border-radius: 0;
+  color: var(--sl-text-2) !important;
+}
+
+.sl-player #playback-speed .menu-choice:hover {
+  background-color: var(--sl-wash) !important;
+  color: var(--sl-text) !important;
+}
+
+/* The player's own shortcut tooltip */
+.sl-player #tooltip {
+  border-radius: 0 !important;
+  font-family: var(--sl-mono) !important;
+  font-size: 11px !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Menu: glass panel that slides over the slide.
+   player.js toggles body.sl-menu-open and keeps the player's own menu closed,
+   so opening it doesn't shrink the slide.
+   -------------------------------------------------------------------------- */
+.sl-player #sidebar {
+  width: clamp(300px, 38%, 440px) !important;
+  max-width: 100%;
+  box-sizing: border-box;
+  border-right: 1px solid var(--sl-line);
+  background-color: var(--sl-panel) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  backdrop-filter: blur(22px) saturate(1.3);
+  font-family: var(--sl-font) !important;
+  transition: transform var(--sl-slow) var(--sl-ease) !important;
+  z-index: 50 !important;
+}
+
+.sl-player.sidebar-right #sidebar {
+  border-right: none;
+  border-left: 1px solid var(--sl-line);
+}
+
+/* The player fixes the panel's contents at a pixel width */
+.sl-player #sidebar #tabs,
+.sl-player #sidebar #sidebar-panels,
+.sl-player #sidebar #sidebar-panels > *,
+.sl-player #sidebar #outline-search-content,
+.sl-player #sidebar #outline-content {
+  width: 100% !important;
+}
+
+.sl-player #sidebar,
+.sl-player #sidebar-panels,
+.sl-player #sidebar-panels > *,
+.sl-player #outline-content,
+.sl-player #tabs {
+  background-image: none !important;
+}
+
+.sl-player #sidebar-panels,
+.sl-player #sidebar-panels > *,
+.sl-player #outline-content {
+  background-color: transparent !important;
+}
+
+/* The hairline replaces the player's soft shadow along the edge */
+.sl-player #wrapper #sidebar::after {
+  display: none !important;
+}
+
+/* Hidden off-screen until opened */
+.sl-player.sidebar-left #sidebar { transform: translateX(-100%) !important; }
+
+.sl-player.sidebar-right #sidebar {
+  left: auto !important;
+  right: 0 !important;
+  transform: translateX(100%) !important;
+}
+
+.sl-player.sl-menu-open #sidebar { transform: translateX(0) !important; }
+
+/* The player hides the contents while it thinks the menu is closed */
+.sl-player.sl-menu-open #sidebar .view-content {
+  visibility: visible !important;
+}
+
+/* In mobile view it takes them out altogether */
+.sl-player.sl-menu-open #sidebar #tabs,
+.sl-player.sl-menu-open #sidebar #sidebar-panels {
+  display: block !important;
+}
+
+#sl-menu-backdrop {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 49;
+  background: var(--sl-backdrop, rgba(0, 0, 0, 0.6));
+  opacity: 0;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  transition: opacity var(--sl-slow) var(--sl-ease);
+}
+
+.sl-player.sl-menu-open #sl-menu-backdrop {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Tab header */
+.sl-player #tabs {
+  border-bottom: 1px solid var(--sl-line) !important;
+  background-color: transparent !important;
+}
+
+.sl-player #tabs .tab {
+  font-family: var(--sl-mono) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sl-text-3) !important;
+  min-width: max-content;   /* The player sizes tabs for its own font */
+}
+
+.sl-player #tabs .tab.cs-selected {
+  color: var(--sl-text) !important;
+}
+
+.sl-player #wrapper #tabs .tab::after {
+  background: var(--sl-accent) !important;
+}
+
+/* Rows */
+.sl-player #outline-content .listitem {
+  border-radius: 0 !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  font-family: var(--sl-font) !important;
+  font-size: 14px !important;
+  color: var(--sl-text-2) !important;
+  transition: background-color var(--sl-fast), color var(--sl-fast);
+}
+
+.sl-player #outline-content .listitem:not(.is-scene) {
+  padding-left: 20px !important;
+}
+
+.sl-player #outline-content .listitem:hover {
+  background-color: var(--sl-wash) !important;
+  color: var(--sl-text) !important;
+}
+
+/* Row numbers, written by player.js */
+.sl-player #outline-content .linkText[data-sl-n]::before {
+  content: attr(data-sl-n);
+  display: inline-block;
+  width: 34px;
+  font-family: var(--sl-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--sl-text-3);
+}
+
+/* The player marks the focused row with a grey border */
+.sl-player #wrapper .cs-listitem:hover {
+  border-color: transparent !important;
+}
+
+.sl-player #wrapper .cs-listitem.hover {
+  border-color: var(--sl-accent) !important;
+  border-radius: 0 !important;
+}
+
+/* Current slide */
+.sl-player #outline-content .listitem.cs-selected {
+  background-color: rgba(200, 255, 46, 0.08) !important;
+  box-shadow: inset 2px 0 0 var(--sl-accent);
+  color: var(--sl-text) !important;
+}
+
+.sl-player #outline-content .listitem.cs-selected .linkText[data-sl-n]::before {
+  color: var(--sl-accent);
+}
+
+/* Scene headers */
+.sl-player #outline-content .listitem.is-scene {
+  font-family: var(--sl-mono) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sl-text-3) !important;
+}
+
+.sl-player .item-collapsible:not(.item-collapsed) .is-scene {
+  color: var(--sl-text-3) !important;
+}
+
+.sl-player #outline-content .listitem.is-scene:hover {
+  color: var(--sl-text) !important;
+}
+
+/* Scene chevron: right when collapsed, down when open, turning on its centre */
+.sl-player #outline-content svg.carrot {
+  transform: none !important;
+  transform-origin: center !important;
+  transition: transform var(--sl-slow) var(--sl-ease);
+}
+
+.sl-player #outline-content .item-collapsible:not(.item-collapsed) > .listitem svg.carrot {
+  transform: rotate(90deg) !important;
+}
+
+.sl-player #outline-content svg.carrot,
+.sl-player #outline-content svg.carrot * {
+  color: var(--sl-text-3) !important;
+}
+
+.sl-player #outline-content svg.check-icon,
+.sl-player #outline-content svg.check-icon * {
+  color: var(--sl-accent) !important;
+}
+
+/* Rows rise in, one after another, as the menu opens */
+@keyframes sl-rise {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: none; }
+}
+
+.sl-player.sl-menu-open #outline-content .listitem {
+  animation: sl-rise var(--sl-slow) var(--sl-ease) both;
+  animation-delay: calc(var(--sl-i, 0) * 16ms + 50ms);
+}
+
+/* Thin scrollbar on the list */
+.sl-player #outline-content {
+  scrollbar-color: var(--sl-line-strong) transparent;
+  scrollbar-width: thin;
+}
+
+
+/* --------------------------------------------------------------------------
+   Menu button: two bars that cross into an X
+   -------------------------------------------------------------------------- */
+.sl-player #hamburger {
+  background-color: transparent !important;
+  color: var(--sl-text);
+  transition: color var(--sl-fast);
+}
+
+.sl-player #hamburger:hover {
+  color: var(--sl-accent);
+}
+
+.sl-player #hamburger .menu-icon-wrapper svg {
+  display: none;
+}
+
+/* Closed: just past the panel's edge, in the top bar */
+.sl-player.sidebar-left #hamburger {
+  left: calc(100% + 1px) !important;
+  transform: none !important;
+}
+
+.sl-player.sidebar-right #hamburger {
+  left: auto !important;
+  right: calc(100% + 1px) !important;
+  transform: none !important;
+}
+
+/* Open: inside the panel's top corner */
+.sl-player.sl-menu-open.sidebar-left #hamburger {
+  left: auto !important;
+  right: 0 !important;
+  z-index: 2;
+}
+
+.sl-player.sl-menu-open.sidebar-right #hamburger {
+  left: 0 !important;
+  right: auto !important;
+  z-index: 2;
+}
+
+.sl-menu-icon {
+  position: relative;
+  display: inline-block;
+  width: 20px;
+  height: 10px;
+  vertical-align: middle;
+}
+
+.sl-menu-icon span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: currentColor;
+  transition: transform var(--sl-slow) var(--sl-ease), top var(--sl-slow) var(--sl-ease), width var(--sl-fast) var(--sl-ease);
+}
+
+.sl-menu-icon span:nth-child(1) { top: 0; }
+.sl-menu-icon span:nth-child(2) { top: 8px; width: 65%; }
+
+.sl-player #hamburger:hover .sl-menu-icon span:nth-child(2) { width: 100%; }
+
+.sl-player.sl-menu-open .sl-menu-icon span:nth-child(1) {
+  top: 4px;
+  transform: rotate(45deg);
+}
+
+.sl-player.sl-menu-open .sl-menu-icon span:nth-child(2) {
+  top: 4px;
+  width: 100%;
+  transform: rotate(-45deg);
+}
+
+
+/* --------------------------------------------------------------------------
+   Start and Resume screen, and the loading dots
+   -------------------------------------------------------------------------- */
+.sl-player .mobile-start-overlay {
+  background-color: var(--sl-void) !important;
+  background-image:
+    radial-gradient(70% 55% at 88% -8%, rgba(200, 255, 46, 0.07), transparent 70%),
+    linear-gradient(rgba(255, 255, 255, 0.026) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.026) 1px, transparent 1px) !important;
+  background-size: 100% 100%, 48px 48px, 48px 48px !important;
+  font-family: var(--sl-font) !important;
+}
+
+.sl-player .mobile-start-course-title h1,
+.sl-player .mobile-load-title {
+  font-family: var(--sl-font) !important;
+  font-size: clamp(26px, 4vw, 44px) !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.03em;
+  color: var(--sl-text) !important;
+}
+
+/* Start and Resume: the same accent block as Next */
+.sl-player .mobile-start-overlay .mobile-start-resume-text button,
+.sl-player .mobile-start-overlay button.start {
+  border: none !important;
+  border-radius: 0 !important;
+  background-color: var(--sl-accent) !important;
+  color: var(--sl-accent-ink) !important;
+  font-family: var(--sl-mono) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+  transition: background-color var(--sl-fast);
+}
+
+.sl-player .mobile-start-overlay .mobile-start-resume-text button:hover,
+.sl-player .mobile-start-overlay button.start:hover {
+  background-color: #ffffff !important;
+}
+
+/* The play triangle */
+.sl-player .mobile-start-overlay .mobile-start-resume-text button::after {
+  border-left-color: var(--sl-accent-ink) !important;
+}
+
+.sl-player .mobile-start-overlay .mobile-start-resume-text button:focus-visible,
+.sl-player .mobile-start-overlay button.start:focus-visible,
+.sl-player .mobile-start-overlay button.restart:focus-visible {
+  clip-path: none;
+  outline: 2px solid var(--sl-accent) !important;
+  outline-offset: 3px !important;
+}
+
+.sl-player .mobile-start-overlay button.restart {
+  color: var(--sl-text-3) !important;
+  transition: color var(--sl-fast);
+}
+
+.sl-player .mobile-start-overlay button.restart .restart-text {
+  font-family: var(--sl-mono) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: inherit !important;
+}
+
+.sl-player .mobile-start-overlay button.restart:hover {
+  color: var(--sl-accent) !important;
+}
+
+.sl-player .mobile-loader-dot {
+  border-radius: 0 !important;
+  background-color: var(--sl-accent) !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Reduced motion: everything still works, nothing travels
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .sl-player *,
+  .sl-player *::before,
+  .sl-player *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
