@@ -15,6 +15,7 @@ z_samples/<name>/               Full published Storyline course, used for previe
 z_scorm_samples/<package>/      The same course published for SCORM 1.2, SCORM 2004 and cmi5,
                                 holding one player at a time (see LMS packages)
 tests/                          Test matrix for all players
+skill/                          Shareable Claude skill that applies a player to a user's course
 ```
 
 `z_samples/` holds web publishes only. Don't add LMS publishes there, and don't make an LMS copy per player.
@@ -122,6 +123,7 @@ Then open `http://localhost:8796/tests/lms-host.html`. It gives the course a SCO
 5. Add `z_samples/<name>/.claude/launch.json` with an unused port, and add the player to the table above.
 6. Add the player to the lists at the top of `tests/harness.html`.
 7. Swap it into the LMS packages with `tests/lms-swap.sh <name>`, and check SCORM 1.2, SCORM 2004 and cmi5 in `tests/lms-host.html`: the skin loads, the course plays, and a reload offers Resume.
+8. Add it to the shareable skill: a row in the player table in `skill/storyline-custom-player/SKILL.md`, its name in `KNOWN` in `skill/storyline-custom-player/scripts/apply_player.py`, then rebuild `skill/storyline-custom-player.skill` (see [skill/README.md](skill/README.md)).
 
 The folder names have to line up: `<name>-player` pairs with `z_samples/<name>`, and the sync check depends on that.
 
