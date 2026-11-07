@@ -5,9 +5,8 @@
    Loaded after Storyline's own CSS, so equal-specificity rules win.
    ============================================================= */
 
-/* Learning Dojo fonts: Space Grotesk (labels, headings), DM Sans (body).
-   Without internet access the player falls back to system fonts. */
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Space+Grotesk:wght@500;600;700&display=swap");
+/* Fonts are loaded by player.js, not an @import here. Without them, the font
+   stacks below fall back to system faces. */
 
 /* ---- Player regions (uncomment / edit to customize) ----------
 
@@ -161,11 +160,11 @@
   fill: var(--ld-primary) !important;
 }
 
-/* Focus ring: 2px brand blue, 2px offset. Never removed. */
-.custom-player #wrapper button:focus-visible,
-.custom-player #wrapper [tabindex]:focus-visible {
-  outline: 2px solid var(--ld-primary) !important;
-  outline-offset: 2px !important;
+/* Keyboard focus. Never removed. The player draws it as its own box over the
+   control, which only needs the theme's colour. */
+.custom-player.show-focus .tab-focus-box {
+  border-color: transparent !important;
+  box-shadow: 0 0 0 2px var(--ld-primary), 0 0 0 4px var(--ld-primary-fg) !important;
 }
 
 
@@ -431,6 +430,11 @@
   width: 100% !important;
 }
 
+/* Otherwise a long list can scroll sideways as well */
+.custom-player #outline-content {
+  overflow-x: hidden !important;
+}
+
 /* Closed: menu button sits just past the panel's edge, in the top bar.
    (Storyline places it at a fixed pixel offset, which would drift.) */
 .custom-player.sidebar-left #hamburger {
@@ -466,13 +470,13 @@
    the X moves inside the panel's top corner. */
 .custom-player.cp-menu-open.sidebar-left #hamburger {
   left: auto !important;
-  right: 0 !important;
+  right: 8px !important;
   transform: none !important;
   z-index: 2;
 }
 
 .custom-player.cp-menu-open.sidebar-right #hamburger {
-  left: 0 !important;
+  left: 8px !important;
   right: auto !important;
   transform: none !important;
   z-index: 2;
@@ -516,6 +520,28 @@
 
 .custom-player #hamburger .menu-icon-wrapper svg {
   display: none;
+}
+
+/* The player's padding leaves no room for the icon, which pushes it off-centre */
+.custom-player #hamburger .menu-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 0 !important;
+}
+
+/* Keyboard focus. The player's focus box is placed once, when focus lands, so it
+   stays behind when this button moves. The ring goes on the icon instead. */
+.custom-player:has(#hamburger:focus) .tab-focus-box {
+  display: none !important;
+}
+
+.custom-player.show-focus #hamburger:focus .cp-menu-icon {
+  outline: 2px solid var(--ld-primary) !important;
+  outline-offset: 6px !important;
 }
 
 .cp-menu-icon {

@@ -1,0 +1,249 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Player matrix</title>
+<body style="margin:0;font:12px monospace;background:#222;color:#ddd">
+<div id="status" style="padding:6px">starting</div>
+<div id="stage" style="position:relative"></div>
+<script>
+/* Add a new player to PLAYERS and SEL, and to BOOTED and SKIN below. */
+const PLAYERS = ['noskin', 'professional', 'whimsical', 'sleek', 'super', 'sunny', 'arcade'];
+const SEL = {
+  professional: { open: 'cp-menu-open' },
+  whimsical: { widget: '#whimsy-trail', skin: 'whimsy' },
+  sleek: { widget: '#sl-rail', readout: '#sl-readout', open: 'sl-menu-open' },
+  super: { widget: '#su-meter', readout: '#su-readout', open: 'su-menu-open' },
+  sunny: { widget: '#sun-garden', readout: '#sun-readout', open: 'sun-menu-open' },
+  arcade: { widget: '#ar-track', readout: '#ar-hud', open: 'ar-menu-open' },
+  noskin: {}
+};
+const BOOTED = { professional: '#cp-menu-backdrop', whimsical: '.whimsy-monster', sleek: '#sl-menu-backdrop', super: '#su-menu-backdrop', sunny: '#sun-menu-backdrop', arcade: '#ar-menu-backdrop' };
+const SKIN = { professional: 'custom-player', sleek: 'sl-player', super: 'su-player', sunny: 'sun-player', arcade: 'ar-player' };
+const DESK = [1024, 700], PHONE = [375, 720], SMALL = [760, 420];
+const params = new URLSearchParams(location.search);
+const suite = params.get('suite') || 'all';
+const SUITES = {
+  shapes: [['p1', DESK], ['p2', DESK], ['p3', DESK], ['flat1', DESK], ['flat11', DESK], ['base', DESK], ['p30', DESK], ['p100', DESK], ['p300', DESK],
+           ['collapsed', DESK], ['titles', DESK], ['nomenu', DESK], ['nobottom', DESK], ['notitle', DESK]],
+  phone: [['p2', PHONE, 1], ['base', PHONE, 1], ['p30', PHONE, 1], ['p300', PHONE, 1], ['titles', PHONE, 1], ['nomenu', PHONE, 1], ['collapsed', PHONE, 1]],
+  lms: [['lms', DESK], ['lms', SMALL], ['lms', PHONE, 1], ['lmsp1', DESK], ['lmsp300', DESK]],
+  hang: [['hang', DESK]],
+  extra: [['p1000', DESK], ['p1000', PHONE, 1], ['p300', DESK], ['p30', PHONE, 1], ['p2', DESK], ['search', DESK], ['nobottom', DESK], ['titles', DESK]],
+  resume: [['lmsresume', DESK], ['lmsresume', DESK]],
+};
+const jobs = [];
+const unknown = suite === 'all' ? [] : suite.split(',').filter(s => !SUITES[s]);
+if (unknown.length) {
+  document.getElementById('status').textContent = 'STOPPED: unknown suite ' + unknown.join(', ') + '. Use: all, ' + Object.keys(SUITES).join(', ');
+  throw new Error('unknown suite');
+}
+const only = params.get('players');
+(suite === 'all' ? Object.keys(SUITES) : suite.split(',')).forEach(s => SUITES[s].forEach(j =>
+  PLAYERS.filter(p => !only || p === 'noskin' || only.split(',').includes(p)).forEach(p => jobs.push({ suite: s, variant: j[0], size: j[1], phone: j[2], player: p }))));
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const rect = e => { if (!e) return null; const b = e.getBoundingClientRect(); return { l: Math.round(b.left), t: Math.round(b.top), r: Math.round(b.right), b: Math.round(b.bottom), w: Math.round(b.width), h: Math.round(b.height) }; };
+const hit = (a, b) => a && b && a.w && b.w && a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b - 1 && b.t < a.b - 1;
+
+function serverVariant(v) { return v === 'lms' ? 'lms' : v === 'lmsp1' ? 'lmsp1' : v === 'lmsp300' ? 'lmsp300' : v; }
+
+async function run(job, slotEl) {
+  const start = performance.now();
+  const f = document.createElement('iframe');
+  f.style.cssText = `width:${job.size[0]}px;height:${job.size[1]}px;border:0;position:absolute;left:0;top:0`;
+  slotEl.appendChild(f);
+  // lmsp1 / lmsp300: LMS mode and a rewritten menu. The server reads pN after the prefix.
+  const v = serverVariant(job.variant);
+  f.src = `/${v}/${job.player}/story.html${job.phone ? '?deviceType=phone' : ''}`;
+  const out = { player: job.player, suite: job.suite, variant: job.variant, size: job.size.join('x'), fails: [] };
+  const fail = m => { if (!out.fails.includes(m)) out.fails.push(m); };
+  // These menus list a different number of pages than the course really has, so
+  // Next can land on a slide that isn't listed, or on a duplicate row.
+  const rewrittenMenu = /^((lms)?p\d+|flat1)$/.test(job.variant);
+  const skinCls = SKIN[job.player];
+  const sel = SEL[job.player];
+  try {
+    let d, w, tries = 0;
+    while (tries++ < 360) {
+      await sleep(100);
+      w = f.contentWindow; d = f.contentDocument;
+      if (d && d.getElementById('frame') && d.querySelector('.slide-container')) break;
+    }
+    out.readyMs = Math.round(performance.now() - start);
+    if (!d || !d.getElementById('frame')) { fail('player never built'); throw new Error('stop'); }
+    await sleep(500);
+    const s = d.querySelector('.mobile-start-overlay .mobile-start-resume-text button, .mobile-start-overlay button.start');
+    out.startScreen = !!(s && s.offsetWidth);
+    if (out.startScreen) s.click();
+    await sleep(2600);
+
+    const body = d.body;
+    if (skinCls && !body.classList.contains(skinCls)) fail('skin class missing');
+    const rows = () => [...d.querySelectorAll('#outline-content .cs-listitem:not(.is-scene)')];
+    const selected = () => { const r = d.querySelector('#outline-content .cs-listitem.cs-selected:not(.is-scene)'); return r ? r.getAttribute('data-slide-title') : null; };
+    out.rows = rows().length;
+    out.sceneCount = d.querySelectorAll('#outline-content .is-scene').length;
+    const measure = () => {
+      if (sel.widget) {
+        const el = d.querySelector(sel.widget), bar = d.getElementById('bottom-bar');
+        const shown = el && getComputedStyle(el).display !== 'none' && rect(el).w > 0;
+        out.widget = shown ? { w: rect(el).w, kids: el.children.length } : 'hidden';
+        if (shown && rect(el).r > job.size[0] + 1) fail('widget past right edge');
+        if (shown && rect(el).l < -1) fail('widget past left edge');
+        if (shown && job.player !== 'whimsical' && job.player !== 'arcade' && el.children.length) {
+          const seg = el.children[0].getBoundingClientRect().width;
+          out.segW = +seg.toFixed(2);
+          if (seg < 1) fail('segments under 1px wide (' + seg.toFixed(2) + ')');
+        }
+        if (shown && job.player === 'arcade') {
+          const gems = el.querySelectorAll('.ar-gems i');
+          if (gems.length && gems[0].getBoundingClientRect().width < 8) fail('gems crammed');
+        }
+        // Widget kids spilling out of the page
+        if (shown && el.scrollWidth > el.clientWidth + 2 && getComputedStyle(el).overflowX === 'visible' && job.player !== 'whimsical' && job.player !== 'arcade') fail('widget content overflows (' + el.scrollWidth + '>' + el.clientWidth + ')');
+      }
+      if (sel.readout) {
+        const r = d.querySelector(sel.readout);
+        const shown = r && getComputedStyle(r).display !== 'none' && rect(r).w > 0;
+        out.readout = shown ? r.textContent.trim().slice(0, 60) : 'hidden';
+        if (shown) {
+          const rr = rect(r);
+          if (rr.r > job.size[0] + 1) fail('readout past right edge');
+          const title = d.querySelector('#top-bar .presentation-title');
+          const others = [...r.parentNode.querySelectorAll('button, .cs-button')].filter(b => !r.contains(b) && getComputedStyle(b).visibility !== 'hidden');
+          others.forEach(b => { if (hit(rr, rect(b))) fail('readout overlaps #' + (b.id || b.className)); });
+          if (title && r.parentNode.id === 'top-bar' && getComputedStyle(title).display !== 'none') {
+            const tt = rect(title); tt.r = tt.l + Math.max(tt.w, title.scrollWidth);
+            if (hit(rr, tt)) fail('readout overlaps title');
+          }
+        }
+      }
+    };
+    measure();
+    if (BOOTED[job.player] && d.getElementById('sidebar') && !d.querySelector(BOOTED[job.player])) fail('skin script never started');
+    out.iconsSwapped = !!d.querySelector('[data-cp-icon],[data-sl-icon],[data-su-icon],[data-sun-icon],[data-ar-icon]');
+    out.resumed = selected();
+
+    // A real navigation
+    const before = selected();
+    out.selected = before;
+    const next = d.getElementById('next');
+    if (next && next.offsetWidth && !next.classList.contains('cs-disabled')) {
+      next.click();
+      await sleep(2200);
+      const after = selected();
+      out.afterNext = after;
+      if (rows().length && after === before && !rewrittenMenu) fail('Next did not move the menu selection');
+    } else out.noNext = true;
+    measure();
+
+    // Menu: opens, has contents, last row reachable, row click navigates and closes
+    const ham = d.getElementById('hamburger'), side = d.getElementById('sidebar');
+    const menuShown = ham && rect(ham).w > 0 && getComputedStyle(ham).visibility !== 'hidden' && side && getComputedStyle(side).display !== 'none';
+    out.menuButton = !!menuShown;
+    if (menuShown) {
+      const wasClosedStock = body.classList.contains('sidebar-closed');
+      ham.click();
+      await sleep(900);
+      const sb = rect(side);
+      if (sb.l < -1 || sb.r > job.size[0] + 60) fail('menu not on screen after open (' + sb.l + ')');
+      const list = d.getElementById('outline-content');
+      const vis = list && getComputedStyle(list).display !== 'none' && list.getBoundingClientRect().height > 0;
+      if (!vis) fail('menu list has no height');
+      const all = [...d.querySelectorAll('#outline-content .cs-listitem')];
+      if (all.length && vis) {
+        const last = all[all.length - 1];
+        // Scroll the list the way a learner would, by its own scroller.
+        let sc = last.parentElement;
+        while (sc && sc !== d.body && !(sc.scrollHeight > sc.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(sc).overflowY))) sc = sc.parentElement;
+        if (sc && sc !== d.body) sc.scrollTop = 1e7;
+        await sleep(150);
+        const lb = rect(last);
+        out.lastRow = lb.b;
+        if (lb.h && lb.b > job.size[1] + 2) fail('last menu row unreachable (bottom ' + lb.b + ' of ' + job.size[1] + ')');
+        if (sc && sc !== d.body) { out.scrollW = [sc.scrollWidth, sc.clientWidth]; if (sc.scrollWidth > sc.clientWidth + 2 && getComputedStyle(sc).overflowX !== 'hidden') fail('menu scrolls sideways'); sc.scrollTop = 0; }
+        const target = [...d.querySelectorAll('#outline-content .cs-listitem:not(.is-scene)')].find(r => !r.classList.contains('cs-selected') && r.offsetHeight);
+        if (target) {
+          const want = target.getAttribute('data-slide-title');
+          target.click();
+          await sleep(2000);
+          const got = selected();
+          out.menuJump = [want, got];
+          if (got !== want && !rewrittenMenu) fail('menu row click did not navigate');
+          if (sel.open && body.classList.contains(sel.open)) fail('overlay did not close after row click');
+        }
+      }
+      if (job.player === 'whimsical' || job.player === 'noskin') { if (!body.classList.contains('sidebar-closed')) { ham.click(); await sleep(300); } }
+      else if (sel.open && body.classList.contains(sel.open)) { ham.click(); await sleep(300); }
+    }
+    measure();
+    // End of a long course: last row current, every row viewed. Widths at their largest.
+    const rr = rows();
+    if (rr.length > 1) {
+      const was = rr.map(r => [r, r.className]);
+      rr.forEach(r => r.classList.remove('cs-selected'));
+      rr.forEach(r => r.classList.add('cs-viewed'));
+      rr[rr.length - 1].classList.add('cs-selected');
+      await sleep(700);
+      const f0 = out.fails.length;
+      measure();
+      out.lastReadout = out.readout;
+      if (sel.widget) {
+        const hero = d.querySelector('.ar-hero, .whimsy-hopper');
+        if (hero && getComputedStyle(hero.parentElement).display !== 'none') { const hb = rect(hero); out.heroAtEnd = hb.r; if (hb.r > job.size[0] + 1) fail('marker past right edge at last page'); }
+      }
+      was.forEach(p => { p[0].className = p[1]; });
+      await sleep(300);
+    }
+    // Menu search, if the course has it
+    const search = d.querySelector('#outline-search input, .outline-search input, input[type=search], #search input');
+    if (search) {
+      out.hasSearch = true;
+      search.value = 'half';
+      search.dispatchEvent(new Event('input', { bubbles: true }));
+      search.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: 'f' }));
+      await sleep(700);
+      out.rowsDuringSearch = rows().length;
+      measure();
+      search.value = '';
+      search.dispatchEvent(new Event('input', { bubbles: true }));
+      search.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: 'f' }));
+      await sleep(400);
+    }
+    // Scene header toggles: must not throw
+    const sceneRow = d.querySelector('#outline-content .is-scene');
+    if (sceneRow) { sceneRow.click(); await sleep(500); out.rowsAfterCollapse = rows().length; measure(); sceneRow.click(); await sleep(400); out.rowsAfterExpand = rows().length; measure(); }
+
+    out.errors = [...new Set(w.__errs || [])].slice(0, 6);
+    if (w.__lms) {
+      const counts = {}; w.__lms.forEach(n => counts[n] = (counts[n] || 0) + 1);
+      out.lms = counts;
+      out.chunk = (w.__chunk || '').length;
+      if (!counts.Start) fail('LMS Start never called');
+      if (!counts.SetDataChunk) fail('LMS resume data never saved');
+    }
+    out.longTask = w.__long;
+    out.fonts = [...d.fonts].filter(x => x.status === 'loaded').length;
+  } catch (e) { if (e.message !== 'stop') fail('harness: ' + e.message); }
+  f.remove();
+  return out;
+}
+
+(async () => {
+  const stage = document.getElementById('stage'), status = document.getElementById('status');
+  status.textContent = `running 0/${jobs.length}`;
+  const results = [];
+  let i = 0, done = 0;
+  const conc = +(params.get('c') || 3);
+  const slots = [...Array(conc)].map((_, n) => { const s = document.createElement('div'); s.style.cssText = `position:absolute;left:${n * 40}px;top:${n * 20}px`; stage.appendChild(s); return s; });
+  await Promise.all(slots.map(async slot => {
+    while (i < jobs.length) {
+      const job = jobs[i++];
+      results.push(await run(job, slot));
+      status.textContent = `running ${++done}/${jobs.length}`;
+    }
+  }));
+  await fetch('/__results/' + (params.get('name') || 'run'), { method: 'POST', body: JSON.stringify(results) });
+  status.textContent = 'done ' + done;
+  window.__done = results;
+})();
+</script>

@@ -8,6 +8,7 @@
    3. And this line just before </html>:
         <script src="custom-player/player.js"></script>
    Republishing from Storyline rewrites story.html, so repeat steps 1-3 after.
+   For a SCORM or cmi5 publish, see README.md.
 
    Why rotate/scale effects target inner elements: the player positions its
    controls with inline transforms, so transforming a control directly would
@@ -15,8 +16,8 @@
    pseudo-element instead.
    ========================================================================== */
 
-/* Needs internet. Without it, the font stack below falls back to a system face. */
-@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap");
+/* Fonts are loaded by player.js, not an @import here. Without them, the font
+   stacks below fall back to system faces. */
 
 /* --------------------------------------------------------------------------
    Change these to re-colour the whole skin
@@ -63,6 +64,9 @@ html body.cs-HTML,
 
 #slide {
   border-radius: 16px;
+  /* The player dims the slide while its "Back to top" link has focus. Without a
+     solid backing, the dots show through instead. */
+  background-color: var(--w-paper) !important;
   box-shadow: 0 0 0 4px var(--w-ink), 7px 9px 0 4px var(--w-grape);
 }
 
@@ -392,10 +396,28 @@ html body.cs-HTML,
 #full-screen-toggle:focus-visible .view-content::before,
 #play-pause:focus-visible .view-content::before,
 #reset:focus-visible::before,
-#volume > button:focus-visible,
-#hamburger:focus-visible .whimsy-monster {
+#volume > button:focus-visible {
   outline: 3px solid var(--w-pink);
   outline-offset: 3px;
+}
+
+/* The player's focus box, in the theme's colours */
+body.show-focus .tab-focus-box {
+  border-color: transparent !important;
+  border-radius: 12px;
+  box-shadow: 0 0 0 3px var(--w-pink), 0 0 0 6px var(--w-ink) !important;
+}
+
+/* Hidden on the big shapes, which already have a ring that follows their outline,
+   and on the monster: the box is placed once, when focus lands, and misses him. */
+body:has(#next:focus, #prev:focus, #submit:focus, #full-screen-toggle:focus, #play-pause:focus, #reset:focus, #hamburger:focus) .tab-focus-box {
+  display: none !important;
+}
+
+/* Offset kept small: the monster nearly fills the button, which clips what's past it */
+body.show-focus #hamburger:focus .whimsy-monster {
+  outline: 3px solid var(--w-pink) !important;
+  outline-offset: 1px !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -405,6 +427,13 @@ html body.cs-HTML,
   z-index: 2;
   background: transparent !important;
 }
+
+/* Menu open: clear of the panel's scalloped edge, and the title moves along with
+   him. Uses left, not transform, because the player positions this button with
+   an inline transform. */
+body.sidebar-left:not(.sidebar-closed) #hamburger { left: 14px !important; }
+body.sidebar-right:not(.sidebar-closed) #hamburger { left: -14px !important; }
+body.sidebar-left:not(.sidebar-closed) #top-bar .presentation-title { margin-left: 14px; }
 
 #hamburger .menu-icon-wrapper {
   position: absolute;

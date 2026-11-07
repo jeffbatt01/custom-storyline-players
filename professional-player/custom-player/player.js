@@ -107,6 +107,14 @@
   // Added right away so the theme applies before the player draws.
   document.body.classList.add('custom-player');
 
+  // Fonts load here, not from an @import in player.css. An @import holds up the
+  // whole course while it waits, which can take 25 seconds or more on an LMS
+  // network that blocks Google Fonts. Without them, player.css uses system faces.
+  var fontLink = document.createElement('link');
+  fontLink.rel = 'stylesheet';
+  fontLink.href = 'https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Space+Grotesk:wght@500;600;700&display=swap';
+  document.head.appendChild(fontLink);
+
   // ---- Lucide icons ------------------------------------------------
   // Swaps Storyline's player icons for Lucide (lucide.dev) glyphs,
   // 24px grid, 2px stroke. Storyline rebuilds icons when state changes

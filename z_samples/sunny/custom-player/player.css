@@ -1,0 +1,1126 @@
+/* ==========================================================================
+   Sunny player skin for Articulate Storyline (Modern Player)
+   A cartoon summer's day: blue sky, drifting clouds, a smiling sun, grassy
+   hills and a garden that blooms as the learner moves through the course.
+
+   TO USE IN ANY COURSE
+   1. Copy this custom-player folder next to the course's story.html.
+   2. In story.html, add this line right after the output.min.css link:
+        <link rel="stylesheet" href="custom-player/player.css"/>
+   3. And this line right after the bootstrapper.min.js script:
+        <script src="custom-player/player.js"></script>
+   Republishing from Storyline rewrites story.html, so repeat steps 1-3 after.
+   For a SCORM or cmi5 publish, see README.md.
+
+   Everything is scoped to body.sun-player, which player.js adds on load.
+   Never transform a control directly: the player positions them with inline
+   transforms. Puffy shapes are pseudo-elements behind the control instead.
+   ========================================================================== */
+
+/* Fonts are loaded by player.js, not an @import here. Without them, the font
+   stacks below fall back to system faces. */
+
+/* --------------------------------------------------------------------------
+   Change these to re-theme the whole skin. The cloud, hill and start-screen
+   sun pictures further down are drawn in their own fixed colours.
+   -------------------------------------------------------------------------- */
+.sun-player {
+  --sun-sky: #4cc4ff;                       /* top of the sky */
+  --sun-sky-low: #c4f0ff;                   /* horizon */
+  --sun-yellow: #ffd02e;                    /* top bar, the action colour */
+  --sun-yellow-soft: #fff0ad;               /* hovered rows */
+  --sun-orange: #ff9a1f;                    /* seekbar, sun rays */
+  --sun-grass: #7fdc4a;                     /* bottom bar */
+  --sun-grass-deep: #2b8f16;                /* stems, leaves, ticks */
+  --sun-cream: #fffaea;                     /* menu, popups, Prev */
+  --sun-white: #ffffff;
+  --sun-ink: #4a2a12;                       /* every outline, and all text */
+  --sun-rust: #a8430a;                      /* scene headers on cream */
+  --sun-pink: #ff6f94;
+  --sun-violet: #b98cff;
+  --sun-blue: #3fb4f5;
+  --sun-backdrop: rgba(255, 244, 196, 0.62);  /* behind the open menu */
+  --sun-display: "Baloo 2", ui-rounded, "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  --sun-font: "Nunito", ui-rounded, "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+  --sun-line: 3px;                          /* outline weight */
+  --sun-boing: cubic-bezier(0.3, 1.7, 0.5, 1);  /* overshoots, then settles */
+  --sun-fast: 140ms;
+  --sun-slow: 300ms;
+
+  /* Puffy white clouds on a repeating 900px-wide strip */
+  --sun-clouds: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='420'%3E%3Cdefs%3E%3Cg id='c'%3E%3Crect x='14' y='44' width='132' height='36' rx='18'/%3E%3Ccircle cx='52' cy='46' r='26'/%3E%3Ccircle cx='92' cy='36' r='34'/%3E%3Ccircle cx='124' cy='54' r='20'/%3E%3C/g%3E%3C/defs%3E%3Cg transform='translate(30 60)'%3E%3Cuse href='%23c' fill='%23a5e1ff' y='7'/%3E%3Cuse href='%23c' fill='white'/%3E%3C/g%3E%3Cg transform='translate(480 20) scale(.7)'%3E%3Cuse href='%23c' fill='%23a5e1ff' y='8'/%3E%3Cuse href='%23c' fill='white'/%3E%3C/g%3E%3Cg transform='translate(640 200) scale(1.15)'%3E%3Cuse href='%23c' fill='%23a5e1ff' y='7'/%3E%3Cuse href='%23c' fill='white'/%3E%3C/g%3E%3Cg transform='translate(210 280) scale(.85)'%3E%3Cuse href='%23c' fill='%23a5e1ff' y='8'/%3E%3Cuse href='%23c' fill='white'/%3E%3C/g%3E%3C/svg%3E");
+
+  /* Two rolling hills, stretched across the start screen */
+  --sun-hills: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 220' preserveAspectRatio='none'%3E%3Cpath d='M-10 230V96C140 20 330 26 520 92S860 150 1010 54V230Z' fill='%23a6ea6e' stroke='%234a2a12' stroke-width='4' vector-effect='non-scaling-stroke'/%3E%3Cpath d='M-10 230V150C170 88 340 108 520 150S830 196 1010 118V230Z' fill='%237fdc4a' stroke='%234a2a12' stroke-width='4' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+
+  /* The start screen's sun. player.js draws the same face for the live ones. */
+  --sun-face: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='%23ff9a1f' stroke='%234a2a12' stroke-width='1.6' stroke-linejoin='round'%3E%3Cpath d='M50 3l6 16H44z'/%3E%3Cpath d='M50 3l6 16H44z' transform='rotate(30 50 50)'/%3E%3Cpath d='M50 3l6 16H44z' transform='rotate(60 50 50)'/%3E%3Cpath d='M50 3l6 16H44z' transform='rotate(90 50 50)'/%3E%3Cpath d='M50 3l6 16H44z' transform='rotate(120 50 50)'/%3E%3Cpath d='M50 3l6 16H44z' transform='rotate(150 50 50)'/%3E%3Cpath d='M50 3l6 16H44z' transform='rotate(180 50 50)'/%3E%3Cpath d='M50 3l6 16H44z' transform='rotate(210 50 50)'/%3E%3Cpath d='M50 3l6 16H44z' transform='rotate(240 50 50)'/%3E%3Cpath d='M50 3l6 16H44z' transform='rotate(270 50 50)'/%3E%3Cpath d='M50 3l6 16H44z' transform='rotate(300 50 50)'/%3E%3Cpath d='M50 3l6 16H44z' transform='rotate(330 50 50)'/%3E%3C/g%3E%3Ccircle cx='50' cy='50' r='29' fill='%23ffd02e' stroke='%234a2a12' stroke-width='1.8'/%3E%3Cellipse cx='41' cy='45' rx='3' ry='4.2' fill='%234a2a12'/%3E%3Cellipse cx='59' cy='45' rx='3' ry='4.2' fill='%234a2a12'/%3E%3Ccircle cx='34' cy='55' r='4.4' fill='%23ff6f94' opacity='.65'/%3E%3Ccircle cx='66' cy='55' r='4.4' fill='%23ff6f94' opacity='.65'/%3E%3Cpath d='M39 57q11 13 22 0' fill='none' stroke='%234a2a12' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+
+/* --------------------------------------------------------------------------
+   Surfaces: sky with clouds, an awning for the top bar, a hill for the bottom
+   -------------------------------------------------------------------------- */
+.sun-player,
+.sun-player #wrapper {
+  background-color: var(--sun-sky) !important;
+}
+
+.sun-player #frame {
+  background-color: var(--sun-sky) !important;
+  background-image: linear-gradient(var(--sun-sky), var(--sun-sky-low)) !important;
+}
+
+/* The clouds. Wider than the frame so the strip can drift without a gap. */
+.sun-player #frame::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: calc(100% + 900px);
+  background: var(--sun-clouds) repeat;
+  pointer-events: none;
+  animation: sun-drift 80s linear infinite;
+}
+
+@keyframes sun-drift {
+  from { transform: translateX(-900px); }
+  to { transform: translateX(0); }
+}
+
+/* Mobile view paints the bars with separate layers behind them */
+.sun-player #frame > [class*="ui-bg"] {
+  background: transparent !important;
+}
+
+.sun-player #top-bar,
+.sun-player #bottom-bar {
+  box-sizing: border-box;
+  font-family: var(--sun-font) !important;
+}
+
+/* A row of rounded scallops along the bottom edge */
+.sun-player #top-bar {
+  background-color: transparent !important;
+  background-image:
+    radial-gradient(circle at 50% -14px, var(--sun-yellow) 0 26px, var(--sun-ink) 26px 29px, transparent 29.5px),
+    linear-gradient(var(--sun-yellow), var(--sun-yellow)) !important;
+  background-size: 48px 16px, 100% calc(100% - 15px) !important;
+  background-position: 0 100%, 0 0 !important;
+  background-repeat: repeat-x, no-repeat !important;
+}
+
+/* The same scallops, turned over: the tops of the grassy bumps */
+.sun-player #bottom-bar {
+  background-color: transparent !important;
+  background-image:
+    radial-gradient(circle at 50% 30px, var(--sun-grass) 0 26px, var(--sun-ink) 26px 29px, transparent 29.5px),
+    linear-gradient(var(--sun-grass), var(--sun-grass)) !important;
+  background-size: 48px 16px, 100% calc(100% - 15px) !important;
+  background-position: 0 0, 0 100% !important;
+  background-repeat: repeat-x, no-repeat !important;
+}
+
+/* The slide is a sticker: white edge, brown outline, soft drop */
+.sun-player #slide {
+  border-radius: 16px !important;
+  /* The player dims the slide while its "Back to top" link has focus. Without a
+     solid backing, the clouds show through instead. */
+  background-color: var(--sun-white) !important;
+  box-shadow:
+    0 0 0 5px var(--sun-white),
+    0 0 0 8px var(--sun-ink),
+    0 12px 0 8px rgba(74, 42, 18, 0.18) !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   The sun: drawn by player.js for the title and for the slide-change hello
+   -------------------------------------------------------------------------- */
+.sun-rays {
+  fill: var(--sun-orange);
+  stroke: var(--sun-ink);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  transform-origin: 50% 50%;
+  animation: sun-spin 24s linear infinite;
+}
+
+.sun-disc {
+  fill: var(--sun-yellow);
+  stroke: var(--sun-ink);
+  stroke-width: 1.8;
+}
+
+.sun-eye { fill: var(--sun-ink); }
+
+.sun-cheek {
+  fill: var(--sun-pink);
+  opacity: 0.65;
+}
+
+.sun-smile {
+  fill: none;
+  stroke: var(--sun-ink);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+@keyframes sun-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Sits in front of the course title */
+.sun-logo {
+  display: inline-block;
+  width: 38px;
+  height: 38px;
+  margin-right: 6px;
+  vertical-align: -12px;
+}
+
+.sun-logo svg,
+#sun-riser svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* The stage is kept on top of #slide and clips to it, so the sun comes up from
+   behind the slide's bottom edge. It never takes clicks. */
+#sun-stage {
+  --sun-riser-size: clamp(70px, 20cqw, 180px);  /* in step with the slide, not the window */
+  position: absolute;
+  z-index: 2;
+  overflow: hidden;
+  border-radius: 16px;
+  pointer-events: none;
+  container-type: size;
+}
+
+#sun-riser {
+  position: absolute;
+  right: 5%;
+  bottom: 0;
+  width: var(--sun-riser-size);
+  aspect-ratio: 1;
+  transform: translateY(105%);
+}
+
+#sun-riser.is-rising {
+  animation: sun-rise 2100ms cubic-bezier(0.3, 1.3, 0.5, 1) both;
+}
+
+@keyframes sun-rise {
+  0% { transform: translateY(105%); }
+  26%, 74% { transform: translateY(20%); }
+  100% { transform: translateY(105%); }
+}
+
+#sun-riser.is-rising .sun-eye-right {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: sun-wink 2100ms both;
+}
+
+@keyframes sun-wink {
+  0%, 38%, 54%, 100% { transform: scaleY(1); }
+  44%, 48% { transform: scaleY(0.12); }
+}
+
+/* The little speech bubble beside it */
+#sun-cheer {
+  position: absolute;
+  right: calc(5% + var(--sun-riser-size) - 6px);
+  bottom: calc(var(--sun-riser-size) * 0.4);
+  padding: 2px 0.6em;
+  border: var(--sun-line) solid var(--sun-ink);
+  border-radius: 18px 18px 4px 18px;
+  background: var(--sun-white);
+  font-family: var(--sun-display);
+  font-size: clamp(13px, 2.4cqw, 24px);
+  font-weight: 800;
+  white-space: nowrap;
+  color: var(--sun-ink);
+  opacity: 0;
+}
+
+#sun-cheer:empty { display: none; }
+
+#sun-cheer.is-rising {
+  animation: sun-cheer 2100ms var(--sun-boing) both;
+}
+
+@keyframes sun-cheer {
+  0%, 18% { opacity: 0; transform: scale(0.3); }
+  30%, 72% { opacity: 1; transform: scale(1); }
+  82%, 100% { opacity: 0; transform: scale(0.8); }
+}
+
+
+/* --------------------------------------------------------------------------
+   Course title
+   -------------------------------------------------------------------------- */
+.sun-player #top-bar .presentation-title,
+.sun-player #top-bar .presentation-title-text {
+  font-family: var(--sun-display) !important;
+  font-size: 23px !important;
+  font-weight: 800 !important;
+  color: var(--sun-ink) !important;
+}
+
+/* The player sizes this box for its own font */
+.sun-player #top-bar .presentation-title,
+.sun-player #top-bar .presentation-title-text {
+  overflow: visible !important;
+  white-space: nowrap;
+}
+
+
+/* --------------------------------------------------------------------------
+   The garden: one flower per slide, growing out of the top of the hill.
+   A sprout until the slide has been viewed, then a bloom. The current slide
+   is the sunflower, nodding along.
+   -------------------------------------------------------------------------- */
+#sun-garden {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 0;
+  display: flex;
+  justify-content: space-evenly;
+  height: 22px;
+  pointer-events: none;
+}
+
+#sun-garden i {
+  display: block;
+  flex: none;
+  width: var(--sun-flower, 20px);
+  height: var(--sun-flower, 20px);
+  transform-origin: 50% 100%;
+}
+
+#sun-garden svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+#sun-garden i:nth-child(4n+1) { --sun-petal: var(--sun-pink); }
+#sun-garden i:nth-child(4n+2) { --sun-petal: var(--sun-white); }
+#sun-garden i:nth-child(4n+3) { --sun-petal: var(--sun-violet); }
+#sun-garden i:nth-child(4n+4) { --sun-petal: var(--sun-blue); }
+
+.sun-stem {
+  fill: none;
+  stroke: var(--sun-grass-deep);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.sun-leaf { fill: var(--sun-grass-deep); }
+
+.sun-petals {
+  fill: var(--sun-petal, var(--sun-pink));
+  stroke: var(--sun-ink);
+  stroke-width: 1.1;
+}
+
+.sun-middle {
+  fill: var(--sun-yellow);
+  stroke: var(--sun-ink);
+  stroke-width: 1.1;
+}
+
+#sun-garden .sun-bloom { display: none; }
+#sun-garden .is-seen .sun-bloom,
+#sun-garden .is-now .sun-bloom { display: block; }
+#sun-garden .is-seen .sun-sprout,
+#sun-garden .is-now .sun-sprout { display: none; }
+
+#sun-garden i.is-now {
+  --sun-petal: var(--sun-yellow);
+  animation: sun-nod 1.5s ease-in-out infinite alternate;
+}
+
+#sun-garden .is-now .sun-middle { fill: var(--sun-orange); }
+
+/* Plays once, when player.js adds the class to a flower that has just opened */
+#sun-garden .just-opened svg {
+  transform-origin: 50% 100%;
+  animation: sun-sprout-up 480ms var(--sun-boing) both;
+}
+
+@keyframes sun-nod {
+  from { transform: rotate(-9deg); }
+  to { transform: rotate(9deg); }
+}
+
+@keyframes sun-sprout-up {
+  from { transform: scale(0.2); }
+  to { transform: scale(1); }
+}
+
+
+/* --------------------------------------------------------------------------
+   Page readout: 3 of 11 and the slide's name
+   -------------------------------------------------------------------------- */
+#sun-readout {
+  position: absolute;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  pointer-events: none;
+  translate: 0 -50%;
+}
+
+#bottom-bar #sun-readout { top: calc(50% + 7px); }
+#top-bar #sun-readout { top: calc(50% - 5px); }
+
+#sun-readout .sun-count {
+  flex: none;
+  padding: 0 11px;
+  border: 2px solid var(--sun-ink);
+  border-radius: 999px;
+  background: var(--sun-cream);
+  font-family: var(--sun-font);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 22px;
+  color: var(--sun-ink);
+}
+
+#sun-readout .sun-count b {
+  font-family: var(--sun-display);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+#sun-readout .sun-name {
+  overflow: hidden;
+  font-family: var(--sun-font);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--sun-ink);
+  text-overflow: ellipsis;
+}
+
+
+/* --------------------------------------------------------------------------
+   Icon buttons
+   -------------------------------------------------------------------------- */
+.sun-player #bottom-bar .cs-button {
+  border-radius: 50% !important;
+  color: var(--sun-ink) !important;
+  transition: background-color var(--sun-fast) !important;
+}
+
+.sun-player #bottom-bar .cs-button:hover {
+  background-color: rgba(255, 255, 255, 0.55) !important;
+  color: var(--sun-ink) !important;
+}
+
+/* Lucide shapes (swapped in by player.js), with a soft, round pen */
+.sun-player #wrapper svg[data-sun-icon],
+.sun-player #wrapper svg[data-sun-icon] * {
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2.6px !important;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Play and pause are solid, so they read as the main control */
+.sun-player #wrapper svg[data-sun-icon="play"] *,
+.sun-player #wrapper svg[data-sun-icon="pause"] * {
+  fill: currentColor !important;
+}
+
+/* Any icon the swap doesn't cover keeps its shape, in the button's colour */
+.sun-player #bottom-bar .cs-icon:not([data-sun-icon]) * {
+  fill: currentColor !important;
+}
+
+/* Keyboard focus. Never removed. The player draws it as its own box over the
+   control, which only needs the theme's colour. */
+.sun-player.show-focus .tab-focus-box {
+  border-color: transparent !important;
+  border-radius: 10px;
+  box-shadow: 0 0 0 3px var(--sun-ink), 0 0 0 6px var(--sun-white) !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Prev / Next / Submit: puffy candy buttons with a lip that presses down.
+   The pill is a pseudo-element, so it can move without touching the player's
+   own transform.
+   -------------------------------------------------------------------------- */
+.sun-player #prev,
+.sun-player #next,
+.sun-player #submit {
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  isolation: isolate;
+}
+
+.sun-player #bottom-bar #prev:hover,
+.sun-player #bottom-bar #next:hover,
+.sun-player #bottom-bar #submit:hover {
+  background: transparent !important;
+}
+
+.sun-player #prev::before,
+.sun-player #next::before,
+.sun-player #submit::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border: var(--sun-line) solid var(--sun-ink);
+  border-radius: 999px;
+  background-color: var(--sun-cream);
+  box-shadow: 0 4px 0 var(--sun-ink), inset 0 3px 0 rgba(255, 255, 255, 0.7);
+  transition: transform var(--sun-fast) var(--sun-boing), box-shadow var(--sun-fast), background-color var(--sun-fast);
+}
+
+.sun-player #next::before,
+.sun-player #submit::before {
+  background-color: var(--sun-yellow);
+}
+
+.sun-player #prev .text,
+.sun-player #next .text,
+.sun-player #submit .text {
+  font-family: var(--sun-display) !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: inherit !important;
+}
+
+.sun-player #bottom-bar #prev,
+.sun-player #bottom-bar #next,
+.sun-player #bottom-bar #submit,
+.sun-player #bottom-bar #prev:hover,
+.sun-player #bottom-bar #next:hover,
+.sun-player #bottom-bar #submit:hover {
+  color: var(--sun-ink) !important;
+}
+
+.sun-player #prev:not(.cs-disabled):hover::before,
+.sun-player #next:not(.cs-disabled):hover::before,
+.sun-player #submit:not(.cs-disabled):hover::before {
+  background-color: var(--sun-white);
+  box-shadow: 0 6px 0 var(--sun-ink), inset 0 3px 0 rgba(255, 255, 255, 0.7);
+  transform: translateY(-2px);
+}
+
+.sun-player #prev:not(.cs-disabled):active::before,
+.sun-player #next:not(.cs-disabled):active::before,
+.sun-player #submit:not(.cs-disabled):active::before {
+  box-shadow: 0 0 0 var(--sun-ink);
+  transform: translateY(4px);
+}
+
+.sun-player #bottom-bar #prev .cs-icon,
+.sun-player #bottom-bar #next .cs-icon,
+.sun-player #bottom-bar #submit .cs-icon {
+  color: inherit !important;
+}
+
+/* Arrows skip the way they're pointing */
+.sun-player #prev .btn-icon,
+.sun-player #next .btn-icon {
+  transition: transform var(--sun-fast) var(--sun-boing);
+}
+
+.sun-player #next:not(.cs-disabled):hover .btn-icon { transform: translateX(4px); }
+.sun-player #prev:not(.cs-disabled):hover .btn-icon { transform: translateX(-4px); }
+
+.sun-player #bottom-bar #prev.cs-disabled,
+.sun-player #bottom-bar #next.cs-disabled,
+.sun-player #bottom-bar #submit.cs-disabled {
+  opacity: 0.45 !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Seekbar: a chunky rounded track with an orange fill and a yellow handle
+   -------------------------------------------------------------------------- */
+.sun-player #seek .progress-bar-seek {
+  height: 10px !important;
+  border-radius: 999px !important;
+  background-color: var(--sun-cream) !important;
+  box-shadow: 0 0 0 2.5px var(--sun-ink);
+}
+
+.sun-player #seek .progress-bar-fill,
+.sun-player #seek .progress-bar-fill-preview {
+  height: 10px !important;
+  border-radius: 999px !important;
+}
+
+.sun-player #wrapper .cs-brandhighlight-bg {
+  background: var(--sun-orange) !important;
+}
+
+/* Mobile view floats the seekbar just above the bar: lifted clear of the hill */
+.sun-player #floating-seek .progress-bar-seek {
+  height: 8px !important;
+  margin-top: -9px;
+  border-radius: 999px !important;
+  background-color: var(--sun-cream) !important;
+  box-shadow: 0 0 0 2px var(--sun-ink);
+}
+
+.sun-player #floating-seek .progress-bar-fill,
+.sun-player #floating-seek .progress-bar-fill-preview {
+  height: 8px !important;
+  border-radius: 999px !important;
+}
+
+/* The player draws its own small handle here, shown only on hover and with an
+   !important colour. Ours is always there. */
+.sun-player #floating-seek .progress-bar-fill::after,
+.sun-player #seek .progress-bar-fill::after {
+  content: "";
+  opacity: 1 !important;
+  transform: none !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: auto !important;
+  right: -9px;
+  box-sizing: border-box;
+  width: 18px !important;
+  height: 18px !important;
+  margin: -9px 0 0 !important;
+  border: 2.5px solid var(--sun-ink);
+  border-radius: 50%;
+  background: var(--sun-yellow) !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Volume and playback speed popups: cream bubbles with a brown outline
+   -------------------------------------------------------------------------- */
+.sun-player #volume .slider-bar {
+  border-radius: 16px !important;
+}
+
+/* The player draws its dark panel as an image here, on top of the background */
+.sun-player #volume .slider-bar::before {
+  display: none !important;
+}
+
+.sun-player #volume.open .slider-bar {
+  background: var(--sun-cream) !important;
+  box-shadow: 0 0 0 var(--sun-line) var(--sun-ink), 0 7px 0 var(--sun-line) var(--sun-ink);
+}
+
+.sun-player #volume .volume-track {
+  border-radius: 999px !important;
+  background-color: var(--sun-yellow-soft) !important;
+}
+
+.sun-player #wrapper #volume .volume-progress {
+  border-radius: 999px !important;
+  background: var(--sun-orange) !important;
+}
+
+.sun-player #wrapper #volume .volume-dot {
+  border-radius: 50% !important;
+  background: var(--sun-yellow) !important;
+  box-shadow: 0 0 0 2px var(--sun-ink);
+}
+
+.sun-player #playback-speed .settings-panel {
+  border: var(--sun-line) solid var(--sun-ink) !important;
+  border-radius: 16px !important;
+  background-color: var(--sun-cream) !important;
+  box-shadow: 0 5px 0 var(--sun-ink) !important;
+}
+
+.sun-player #playback-speed .settings-panel .title {
+  font-family: var(--sun-display) !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: var(--sun-rust) !important;
+}
+
+.sun-player #playback-speed .menu-choice {
+  border-radius: 10px;
+  font-family: var(--sun-font) !important;
+  font-weight: 800;
+  color: var(--sun-ink) !important;
+}
+
+.sun-player #playback-speed .menu-choice:hover {
+  background-color: var(--sun-yellow-soft) !important;
+  color: var(--sun-ink) !important;
+}
+
+/* The player's own shortcut tooltip */
+.sun-player #tooltip {
+  border: 2px solid var(--sun-ink) !important;
+  border-radius: 10px !important;
+  background: var(--sun-cream) !important;
+  font-family: var(--sun-font) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: var(--sun-ink) !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Menu: a cream panel that bounces in over the slide.
+   player.js toggles body.sun-menu-open and keeps the player's own menu closed,
+   so opening it doesn't shrink the slide.
+   -------------------------------------------------------------------------- */
+.sun-player #sidebar {
+  width: clamp(300px, 38%, 440px) !important;
+  max-width: 100%;
+  box-sizing: border-box;
+  border-right: 5px solid var(--sun-ink);
+  background-color: var(--sun-cream) !important;
+  font-family: var(--sun-font) !important;
+  transition: transform var(--sun-slow) var(--sun-boing) !important;
+  z-index: 50 !important;
+}
+
+/* Cream past the outer edge, so the bounce never shows a gap */
+.sun-player.sidebar-left #sidebar { box-shadow: -60px 0 0 var(--sun-cream); }
+.sun-player.sidebar-right #sidebar { box-shadow: 60px 0 0 var(--sun-cream); }
+
+.sun-player.sidebar-right #sidebar {
+  border-right: none;
+  border-left: 5px solid var(--sun-ink);
+}
+
+/* The player fixes the panel's contents at a pixel width */
+.sun-player #sidebar #tabs,
+.sun-player #sidebar #sidebar-panels,
+.sun-player #sidebar #sidebar-panels > *,
+.sun-player #sidebar #outline-search-content,
+.sun-player #sidebar #outline-content {
+  width: 100% !important;
+}
+
+.sun-player #sidebar,
+.sun-player #sidebar-panels,
+.sun-player #sidebar-panels > *,
+.sun-player #outline-content,
+.sun-player #tabs {
+  background-image: none !important;
+}
+
+.sun-player #sidebar-panels,
+.sun-player #sidebar-panels > *,
+.sun-player #outline-content {
+  background-color: transparent !important;
+}
+
+/* The brown line replaces the player's soft shadow along the edge */
+.sun-player #wrapper #sidebar::after {
+  display: none !important;
+}
+
+/* Hidden off-screen until opened. The extra 70px clears the cream overhang. */
+.sun-player.sidebar-left #sidebar { transform: translateX(calc(-100% - 70px)) !important; }
+
+.sun-player.sidebar-right #sidebar {
+  left: auto !important;
+  right: 0 !important;
+  transform: translateX(calc(100% + 70px)) !important;
+}
+
+.sun-player.sun-menu-open #sidebar { transform: translateX(0) !important; }
+
+/* The player hides the contents while it thinks the menu is closed */
+.sun-player.sun-menu-open #sidebar .view-content {
+  visibility: visible !important;
+}
+
+/* In mobile view it takes them out altogether */
+.sun-player.sun-menu-open #sidebar #tabs,
+.sun-player.sun-menu-open #sidebar #sidebar-panels {
+  display: block !important;
+}
+
+#sun-menu-backdrop {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 49;
+  background: var(--sun-backdrop);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--sun-slow);
+}
+
+.sun-player.sun-menu-open #sun-menu-backdrop {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Tab header: a strip of the sky */
+.sun-player #tabs {
+  border-bottom: var(--sun-line) solid var(--sun-ink) !important;
+  background-color: var(--sun-yellow) !important;
+}
+
+.sun-player #tabs .tab {
+  font-family: var(--sun-display) !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  color: var(--sun-ink) !important;
+  opacity: 0.75;
+  min-width: max-content;   /* The player sizes tabs for its own font */
+}
+
+.sun-player #tabs .tab.cs-selected {
+  font-weight: 800 !important;
+  opacity: 1;
+}
+
+.sun-player #wrapper #tabs .tab::after {
+  height: 4px !important;
+  border-radius: 4px 4px 0 0;
+  background: var(--sun-ink) !important;
+}
+
+/* Rows */
+.sun-player #outline-content .listitem {
+  border-radius: 14px !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  font-family: var(--sun-font) !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: var(--sun-ink) !important;
+  transition: background-color var(--sun-fast);
+}
+
+.sun-player #outline-content .listitem:not(.is-scene) {
+  padding-left: 12px !important;
+}
+
+.sun-player #outline-content .listitem:hover {
+  background-color: var(--sun-yellow-soft) !important;
+  color: var(--sun-ink) !important;
+}
+
+/* Page numbers, written by player.js, in a coloured dot */
+.sun-player #outline-content .linkText[data-sun-n]::before {
+  content: attr(data-sun-n);
+  display: inline-block;
+  width: 26px;
+  height: 26px;
+  margin-right: 9px;
+  border: 2px solid var(--sun-ink);
+  border-radius: 50%;
+  box-sizing: border-box;
+  background: var(--sun-dot, var(--sun-pink));
+  font-family: var(--sun-display);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 23px;
+  text-align: center;
+  vertical-align: 1px;
+  color: var(--sun-ink);
+}
+
+.sun-player #outline-content .linkText[data-sun-tone="0"] { --sun-dot: var(--sun-pink); }
+.sun-player #outline-content .linkText[data-sun-tone="1"] { --sun-dot: var(--sun-grass); }
+.sun-player #outline-content .linkText[data-sun-tone="2"] { --sun-dot: var(--sun-violet); }
+.sun-player #outline-content .linkText[data-sun-tone="3"] { --sun-dot: var(--sun-blue); }
+
+/* The player marks the focused row with a grey border */
+.sun-player #wrapper .cs-listitem:hover {
+  border-color: transparent !important;
+}
+
+.sun-player #wrapper .cs-listitem.hover {
+  border-color: var(--sun-ink) !important;
+  border-radius: 14px !important;
+}
+
+/* Current slide */
+.sun-player #outline-content .listitem.cs-selected {
+  background-color: var(--sun-yellow) !important;
+  box-shadow: inset 0 0 0 2.5px var(--sun-ink);
+  color: var(--sun-ink) !important;
+}
+
+.sun-player #outline-content .listitem.cs-selected .linkText[data-sun-n]::before {
+  background: var(--sun-white);
+}
+
+/* Scene headers */
+.sun-player #outline-content .listitem.is-scene,
+.sun-player .item-collapsible:not(.item-collapsed) .is-scene {
+  font-family: var(--sun-display) !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: var(--sun-rust) !important;
+}
+
+/* Scene chevron: right when collapsed, down when open, turning on its centre */
+.sun-player #outline-content svg.carrot {
+  transform: none !important;
+  transform-origin: center !important;
+  transition: transform var(--sun-slow) var(--sun-boing);
+}
+
+.sun-player #outline-content .item-collapsible:not(.item-collapsed) > .listitem svg.carrot {
+  transform: rotate(90deg) !important;
+}
+
+.sun-player #outline-content svg.carrot,
+.sun-player #outline-content svg.carrot * {
+  color: var(--sun-rust) !important;
+}
+
+.sun-player #outline-content svg.check-icon,
+.sun-player #outline-content svg.check-icon * {
+  color: var(--sun-grass-deep) !important;
+}
+
+/* Rows hop in, one after another, as the menu opens */
+@keyframes sun-hop-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.94); }
+  to { opacity: 1; transform: none; }
+}
+
+.sun-player.sun-menu-open #outline-content .listitem {
+  animation: sun-hop-in var(--sun-slow) var(--sun-boing) both;
+  animation-delay: calc(var(--sun-i, 0) * 18ms + 70ms);
+}
+
+.sun-player #outline-content {
+  scrollbar-color: var(--sun-orange) transparent;
+  scrollbar-width: thin;
+}
+
+
+/* --------------------------------------------------------------------------
+   Menu button: three round bars that cross into an X
+   -------------------------------------------------------------------------- */
+.sun-player #hamburger {
+  background-color: transparent !important;
+  color: var(--sun-ink);
+}
+
+.sun-player #hamburger .menu-icon-wrapper svg {
+  display: none;
+}
+
+/* Closed: just past the panel's edge, in the top bar */
+.sun-player.sidebar-left #hamburger {
+  left: calc(100% + 75px) !important;
+  transform: none !important;
+}
+
+.sun-player.sidebar-right #hamburger {
+  left: auto !important;
+  right: calc(100% + 75px) !important;
+  transform: none !important;
+}
+
+/* Open: inside the panel's top corner */
+.sun-player.sun-menu-open.sidebar-left #hamburger {
+  left: auto !important;
+  right: 8px !important;
+  z-index: 2;
+}
+
+.sun-player.sun-menu-open.sidebar-right #hamburger {
+  left: 8px !important;
+  right: auto !important;
+  z-index: 2;
+}
+
+/* The player's padding leaves no room for the icon, which pushes it off-centre */
+.sun-player #hamburger .menu-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 0 !important;
+}
+
+/* Keyboard focus. The player's focus box is placed once, when focus lands, so it
+   stays behind when this button moves. The ring goes on the icon instead. */
+.sun-player:has(#hamburger:focus) .tab-focus-box {
+  display: none !important;
+}
+
+.sun-player.show-focus #hamburger:focus .sun-menu-icon {
+  outline: 3px solid var(--sun-ink) !important;
+  outline-offset: 5px !important;
+}
+
+.sun-menu-icon {
+  position: relative;
+  display: inline-block;
+  width: 24px;
+  height: 18px;
+  vertical-align: middle;
+  transition: scale var(--sun-fast) var(--sun-boing);
+}
+
+.sun-player #hamburger:hover .sun-menu-icon {
+  scale: 1.15;
+}
+
+.sun-menu-icon span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  border-radius: 4px;
+  background: currentColor;
+  transition: transform var(--sun-slow) var(--sun-boing), top var(--sun-slow) var(--sun-boing), opacity var(--sun-fast);
+}
+
+.sun-menu-icon span:nth-child(1) { top: 0; }
+.sun-menu-icon span:nth-child(2) { top: 7px; }
+.sun-menu-icon span:nth-child(3) { top: 14px; }
+
+.sun-player.sun-menu-open .sun-menu-icon span:nth-child(1) {
+  top: 7px;
+  transform: rotate(45deg);
+}
+
+.sun-player.sun-menu-open .sun-menu-icon span:nth-child(2) {
+  opacity: 0;
+}
+
+.sun-player.sun-menu-open .sun-menu-icon span:nth-child(3) {
+  top: 7px;
+  transform: rotate(-45deg);
+}
+
+
+/* --------------------------------------------------------------------------
+   Start and Resume screen: the whole scene, drawn in CSS so it's there before
+   the player script has run. And the loading dots.
+   -------------------------------------------------------------------------- */
+.sun-player .mobile-start-overlay {
+  background-color: var(--sun-sky) !important;
+  background-image:
+    var(--sun-face),
+    var(--sun-hills),
+    var(--sun-clouds),
+    linear-gradient(var(--sun-sky), var(--sun-sky-low)) !important;
+  background-size:
+    clamp(170px, 30vmin, 300px) auto,
+    100% 32%,
+    900px 420px,
+    100% 100% !important;
+  background-position:
+    calc(100% + 30px) -30px,
+    0 100%,
+    0 0,
+    0 0 !important;
+  background-repeat: no-repeat, no-repeat, repeat, no-repeat !important;
+  font-family: var(--sun-font) !important;
+}
+
+.sun-player .mobile-start-course-title h1,
+.sun-player .mobile-load-title {
+  font-family: var(--sun-display) !important;
+  font-size: clamp(36px, 7vw, 72px) !important;
+  font-weight: 800 !important;
+  line-height: 1.1;
+  color: var(--sun-yellow) !important;
+  text-shadow:
+    -3px -3px 0 var(--sun-ink), 3px -3px 0 var(--sun-ink),
+    -3px 3px 0 var(--sun-ink), 3px 3px 0 var(--sun-ink),
+    0 -3px 0 var(--sun-ink), 0 3px 0 var(--sun-ink),
+    -3px 0 0 var(--sun-ink), 3px 0 0 var(--sun-ink),
+    0 8px 0 var(--sun-ink);
+}
+
+/* Start and Resume: the same puffy pill as Next */
+.sun-player .mobile-start-overlay .mobile-start-resume-text button,
+.sun-player .mobile-start-overlay button.start {
+  border: 4px solid var(--sun-ink) !important;
+  border-radius: 999px !important;
+  background-color: var(--sun-yellow) !important;
+  box-shadow: 0 7px 0 var(--sun-ink), inset 0 4px 0 rgba(255, 255, 255, 0.6);
+  color: var(--sun-ink) !important;
+  font-family: var(--sun-display) !important;
+  font-size: 24px !important;
+  font-weight: 800 !important;
+  transition: background-color var(--sun-fast), box-shadow var(--sun-fast), translate var(--sun-fast) var(--sun-boing);
+}
+
+.sun-player .mobile-start-overlay .mobile-start-resume-text button:hover,
+.sun-player .mobile-start-overlay button.start:hover {
+  background-color: var(--sun-white) !important;
+  box-shadow: 0 10px 0 var(--sun-ink), inset 0 4px 0 rgba(255, 255, 255, 0.6);
+  translate: 0 -3px;
+}
+
+/* The play triangle */
+.sun-player .mobile-start-overlay .mobile-start-resume-text button::after {
+  border-left-color: var(--sun-ink) !important;
+}
+
+.sun-player .mobile-start-overlay .mobile-start-resume-text button:focus-visible,
+.sun-player .mobile-start-overlay button.start:focus-visible,
+.sun-player .mobile-start-overlay button.restart:focus-visible {
+  outline: 3px solid var(--sun-ink) !important;
+  outline-offset: 4px !important;
+}
+
+/* Restart sits on the hill */
+.sun-player .mobile-start-overlay button.restart {
+  color: var(--sun-ink) !important;
+}
+
+.sun-player .mobile-start-overlay button.restart svg path {
+  fill: var(--sun-ink) !important;
+}
+
+.sun-player .mobile-start-overlay button.restart .restart-text {
+  font-family: var(--sun-display) !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: inherit !important;
+}
+
+.sun-player .mobile-start-overlay button.restart:hover .restart-text {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.sun-player .mobile-loader-dot {
+  background-color: var(--sun-orange) !important;
+  box-shadow: 0 0 0 2px var(--sun-ink);
+}
+
+
+/* --------------------------------------------------------------------------
+   Reduced motion: everything still works, nothing drifts and the sun stays put
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .sun-player *,
+  .sun-player *::before,
+  .sun-player *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -9,15 +9,15 @@
    3. And this line right after the bootstrapper.min.js script:
         <script src="custom-player/player.js"></script>
    Republishing from Storyline rewrites story.html, so repeat steps 1-3 after.
-   For an LMS publish, add the same lines to index_lms.html.
+   For a SCORM or cmi5 publish, see README.md.
 
    Everything is scoped to body.sl-player, which player.js adds on load.
    Never transform a control directly: the player positions them with inline
    transforms. Anything that moves is an inner element instead.
    ========================================================================== */
 
-/* Needs internet. Without it, the font stacks below fall back to system faces. */
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap");
+/* Fonts are loaded by player.js, not an @import here. Without them, the font
+   stacks below fall back to system faces. */
 
 /* --------------------------------------------------------------------------
    Change these to re-theme the whole skin
@@ -224,11 +224,11 @@
   fill: currentColor !important;
 }
 
-/* Keyboard focus. Never removed. */
-.sl-player #wrapper button:focus-visible,
-.sl-player #wrapper [tabindex]:focus-visible {
-  outline: 2px solid var(--sl-accent) !important;
-  outline-offset: 2px !important;
+/* Keyboard focus. Never removed. The player draws it as its own box over the
+   control, which only needs the theme's colour. */
+.sl-player.show-focus .tab-focus-box {
+  border-color: transparent !important;
+  box-shadow: 0 0 0 2px var(--sl-accent), 0 0 0 4px var(--sl-void) !important;
 }
 
 
@@ -280,12 +280,6 @@
 .sl-player #bottom-bar #submit:hover {
   background-color: #ffffff !important;
   color: var(--sl-accent-ink) !important;
-}
-
-/* The cut corner would clip the focus ring, so it goes while focused */
-.sl-player #bottom-bar #next:focus-visible,
-.sl-player #bottom-bar #submit:focus-visible {
-  clip-path: none;
 }
 
 .sl-player #bottom-bar #prev .cs-icon,
@@ -654,14 +648,36 @@
 /* Open: inside the panel's top corner */
 .sl-player.sl-menu-open.sidebar-left #hamburger {
   left: auto !important;
-  right: 0 !important;
+  right: 8px !important;
   z-index: 2;
 }
 
 .sl-player.sl-menu-open.sidebar-right #hamburger {
-  left: 0 !important;
+  left: 8px !important;
   right: auto !important;
   z-index: 2;
+}
+
+/* The player's padding leaves no room for the icon, which pushes it off-centre */
+.sl-player #hamburger .menu-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 0 !important;
+}
+
+/* Keyboard focus. The player's focus box is placed once, when focus lands, so it
+   stays behind when this button moves. The ring goes on the icon instead. */
+.sl-player:has(#hamburger:focus) .tab-focus-box {
+  display: none !important;
+}
+
+.sl-player.show-focus #hamburger:focus .sl-menu-icon {
+  outline: 2px solid var(--sl-accent) !important;
+  outline-offset: 8px !important;
 }
 
 .sl-menu-icon {

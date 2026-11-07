@@ -1,0 +1,904 @@
+/* ==========================================================================
+   Super player skin for Articulate Storyline (Modern Player)
+   Comic-book hero: primary colours, thick ink lines, slanted action buttons.
+
+   TO USE IN ANY COURSE
+   1. Copy this custom-player folder next to the course's story.html.
+   2. In story.html, add this line right after the output.min.css link:
+        <link rel="stylesheet" href="custom-player/player.css"/>
+   3. And this line right after the bootstrapper.min.js script:
+        <script src="custom-player/player.js"></script>
+   Republishing from Storyline rewrites story.html, so repeat steps 1-3 after.
+   For a SCORM or cmi5 publish, see README.md.
+
+   Everything is scoped to body.su-player, which player.js adds on load.
+   Never transform a control directly: the player positions them with inline
+   transforms. Slanted shapes are pseudo-elements behind the control instead.
+   ========================================================================== */
+
+/* Fonts are loaded by player.js, not an @import here. Without them, the font
+   stacks below fall back to system faces. */
+
+/* --------------------------------------------------------------------------
+   Change these to re-theme the whole skin
+   -------------------------------------------------------------------------- */
+.su-player {
+  --su-blue: #1749d6;                       /* sky behind the slide */
+  --su-blue-deep: #0d2f9e;                  /* sky's darker rays */
+  --su-red: #d81f2f;                        /* top bar, current page */
+  --su-yellow: #ffd60a;                     /* the action colour */
+  --su-paper: #fff7df;                      /* menu, popups, Prev */
+  --su-ink: #0c1024;                        /* every outline, and text on light */
+  --su-night: #141c4d;                      /* bottom bar */
+  --su-white: #ffffff;
+  --su-muted: #5b5f77;                      /* labels on paper */
+  --su-on-night: #c9d2ff;                   /* labels on the bottom bar */
+  --su-backdrop: rgba(9, 15, 56, 0.62);
+  --su-display: "Bangers", Impact, "Arial Narrow Bold", "Arial Black", sans-serif;
+  --su-font: "Barlow Condensed", "Arial Narrow", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --su-line: 3px;                           /* ink line weight */
+  --su-slant: -9deg;
+  --su-punch: cubic-bezier(0.2, 1.5, 0.4, 1);  /* overshoots, then settles */
+  --su-fast: 120ms;
+  --su-slow: 260ms;
+  --su-rays: repeating-conic-gradient(from 0deg at 50% 50%, var(--su-blue-deep) 0deg 9deg, transparent 9deg 18deg);
+  --su-dots: radial-gradient(circle, rgba(12, 16, 36, 0.3) 1.6px, transparent 2px);
+}
+
+
+/* --------------------------------------------------------------------------
+   Surfaces: a sunburst sky with halftone dots, a red masthead, a night footer
+   -------------------------------------------------------------------------- */
+.su-player,
+.su-player #wrapper {
+  background-color: var(--su-blue) !important;
+}
+
+.su-player #frame {
+  background-color: var(--su-blue) !important;
+  background-image: var(--su-dots), var(--su-rays) !important;
+  background-size: 11px 11px, 100% 100% !important;
+}
+
+/* Mobile view paints the bars with separate layers behind them */
+.su-player #frame > [class*="ui-bg"] {
+  background: transparent !important;
+}
+
+.su-player #top-bar,
+.su-player #bottom-bar {
+  box-sizing: border-box;
+  font-family: var(--su-font) !important;
+}
+
+.su-player #top-bar {
+  background-color: var(--su-red) !important;
+  background-image: radial-gradient(circle, rgba(12, 16, 36, 0.24) 1.6px, transparent 2px) !important;
+  background-size: 9px 9px !important;
+  border-bottom: 4px solid var(--su-ink);
+}
+
+.su-player #bottom-bar {
+  background-color: var(--su-night) !important;
+  background-image: none !important;
+  border-top: 4px solid var(--su-ink);
+}
+
+/* The slide is a comic panel: thick ink line, hard shadow */
+.su-player #slide {
+  border-radius: 0 !important;
+  /* The player dims the slide while its "Back to top" link has focus. Without a
+     solid backing, the sunburst shows through instead. */
+  background-color: var(--su-ink) !important;
+  box-shadow:
+    0 0 0 4px var(--su-ink),
+    9px 9px 0 4px var(--su-ink) !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Sound-effect burst. player.js keeps the stage on top of #slide.
+   -------------------------------------------------------------------------- */
+#su-burst-stage {
+  position: absolute;
+  z-index: 40;
+  pointer-events: none;
+}
+
+#su-burst {
+  position: absolute;
+  top: clamp(-22px, -2vw, -8px);
+  right: clamp(-26px, -2vw, -8px);
+  width: clamp(92px, 15vw, 164px);
+  aspect-ratio: 1;
+  opacity: 0;
+  rotate: 8deg;
+}
+
+#su-burst svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.su-burst-shadow {
+  fill: var(--su-ink);
+}
+
+.su-burst-fill {
+  fill: var(--su-yellow);
+  stroke: var(--su-ink);
+  stroke-width: 2.4;
+  stroke-linejoin: miter;
+}
+
+#su-burst span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--su-display);
+  font-size: clamp(19px, 3vw, 34px);
+  letter-spacing: 0.02em;
+  color: var(--su-red);
+  -webkit-text-stroke: 1px var(--su-ink);
+  rotate: -14deg;
+}
+
+@keyframes su-pop {
+  0% { opacity: 0; transform: scale(0.2); }
+  18% { opacity: 1; transform: scale(1.14); }
+  30% { transform: scale(0.96); }
+  40%, 76% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+
+#su-burst.is-popping {
+  animation: su-pop 950ms ease-out both;
+}
+
+
+/* --------------------------------------------------------------------------
+   Course title: the masthead, with a bolt in front of it
+   -------------------------------------------------------------------------- */
+.su-player #top-bar .presentation-title,
+.su-player #top-bar .presentation-title-text {
+  font-family: var(--su-display) !important;
+  font-size: 23px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.05em;
+  color: var(--su-white) !important;
+  text-shadow: 2px 2px 0 var(--su-ink);
+}
+
+/* The player sizes this box for its own font */
+.su-player #top-bar .presentation-title-text {
+  overflow: visible !important;
+  white-space: nowrap;
+}
+
+.su-player #top-bar .presentation-title-text::before {
+  content: "";
+  display: inline-block;
+  width: 15px;
+  height: 22px;
+  margin-right: 9px;
+  vertical-align: -3px;
+  background: var(--su-yellow);
+  clip-path: polygon(62% 0, 8% 56%, 42% 56%, 26% 100%, 92% 38%, 56% 38%, 82% 0);
+  filter: drop-shadow(1px 1px 0 var(--su-ink));
+}
+
+
+/* --------------------------------------------------------------------------
+   Power meter: one segment per slide, along the top of the bottom bar
+   -------------------------------------------------------------------------- */
+#su-meter {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  display: flex;
+  gap: 3px;
+  height: 6px;
+  background: var(--su-ink);
+  pointer-events: none;
+}
+
+#su-meter i {
+  flex: 1 1 0;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.14);
+  transition: background-color var(--su-slow);
+}
+
+#su-meter i.is-seen {
+  background: var(--su-yellow);
+}
+
+#su-meter i.is-now {
+  background: var(--su-red);
+  box-shadow: inset 0 0 0 1px var(--su-yellow);
+}
+
+
+/* --------------------------------------------------------------------------
+   Page readout: 03 of 11 and the slide's name
+   -------------------------------------------------------------------------- */
+#su-readout {
+  position: absolute;
+  top: 50%;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  translate: 0 -50%;
+}
+
+#su-readout .su-count {
+  flex: none;
+  font-family: var(--su-display);
+  font-size: 17px;
+  letter-spacing: 0.05em;
+  color: var(--su-on-night);
+}
+
+#su-readout .su-count b {
+  font-size: 23px;
+  font-weight: 400;
+  color: var(--su-yellow);
+}
+
+#su-readout .su-name {
+  overflow: hidden;
+  font-family: var(--su-font);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--su-white);
+  text-overflow: ellipsis;
+}
+
+/* In the red top bar, when a seekbar takes the bottom one */
+#top-bar #su-readout .su-count { color: var(--su-white); text-shadow: 1px 1px 0 var(--su-ink); }
+#top-bar #su-readout .su-count b { color: var(--su-yellow); }
+
+
+/* --------------------------------------------------------------------------
+   Icon buttons
+   -------------------------------------------------------------------------- */
+.su-player #bottom-bar .cs-button {
+  border-radius: 0 !important;
+  color: var(--su-white) !important;
+  transition: color var(--su-fast) !important;
+}
+
+.su-player #bottom-bar .cs-button:hover {
+  color: var(--su-yellow) !important;
+}
+
+/* Lucide shapes (swapped in by player.js), drawn with a heavy pen */
+.su-player #wrapper svg[data-su-icon],
+.su-player #wrapper svg[data-su-icon] * {
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2.75px !important;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Play and pause are solid, so they read as the main control */
+.su-player #wrapper svg[data-su-icon="play"] *,
+.su-player #wrapper svg[data-su-icon="pause"] * {
+  fill: currentColor !important;
+}
+
+/* Any icon the swap doesn't cover keeps its shape, in the button's colour */
+.su-player #bottom-bar .cs-icon:not([data-su-icon]) * {
+  fill: currentColor !important;
+}
+
+/* Keyboard focus. Never removed. The player draws it as its own box over the
+   control, which only needs the theme's colour. */
+.su-player.show-focus .tab-focus-box {
+  border-color: transparent !important;
+  box-shadow: 0 0 0 3px var(--su-yellow), 0 0 0 6px var(--su-ink) !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Prev / Next / Submit: slanted action blocks. The block is a pseudo-element,
+   so it can slant and press in without touching the player's own transform.
+   -------------------------------------------------------------------------- */
+.su-player #prev,
+.su-player #next,
+.su-player #submit {
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  isolation: isolate;
+}
+
+.su-player #prev::before,
+.su-player #next::before,
+.su-player #submit::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border: var(--su-line) solid var(--su-ink);
+  background-color: var(--su-paper);
+  box-shadow: 3px 3px 0 var(--su-ink);
+  transform: skewX(var(--su-slant));
+  transition: transform var(--su-fast) var(--su-punch), box-shadow var(--su-fast), background-color var(--su-fast);
+}
+
+.su-player #next::before,
+.su-player #submit::before {
+  background-color: var(--su-yellow);
+}
+
+.su-player #prev .text,
+.su-player #next .text,
+.su-player #submit .text {
+  font-family: var(--su-display) !important;
+  font-size: 19px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.06em;
+  color: inherit !important;
+}
+
+.su-player #bottom-bar #prev,
+.su-player #bottom-bar #next,
+.su-player #bottom-bar #submit,
+.su-player #bottom-bar #prev:hover,
+.su-player #bottom-bar #next:hover,
+.su-player #bottom-bar #submit:hover {
+  color: var(--su-ink) !important;
+}
+
+.su-player #prev:not(.cs-disabled):hover::before,
+.su-player #next:not(.cs-disabled):hover::before,
+.su-player #submit:not(.cs-disabled):hover::before {
+  background-color: var(--su-white);
+  box-shadow: 5px 5px 0 var(--su-ink);
+  transform: skewX(var(--su-slant)) translate(-2px, -2px);
+}
+
+.su-player #prev:not(.cs-disabled):active::before,
+.su-player #next:not(.cs-disabled):active::before,
+.su-player #submit:not(.cs-disabled):active::before {
+  box-shadow: 0 0 0 var(--su-ink);
+  transform: skewX(var(--su-slant)) translate(3px, 3px);
+}
+
+.su-player #bottom-bar #prev .cs-icon,
+.su-player #bottom-bar #next .cs-icon,
+.su-player #bottom-bar #submit .cs-icon {
+  color: inherit !important;
+}
+
+/* Arrows lean the way they're pointing */
+.su-player #prev .btn-icon,
+.su-player #next .btn-icon {
+  transition: transform var(--su-fast) var(--su-punch);
+}
+
+.su-player #next:not(.cs-disabled):hover .btn-icon { transform: translateX(4px); }
+.su-player #prev:not(.cs-disabled):hover .btn-icon { transform: translateX(-4px); }
+
+.su-player #bottom-bar #prev.cs-disabled,
+.su-player #bottom-bar #next.cs-disabled,
+.su-player #bottom-bar #submit.cs-disabled {
+  opacity: 0.4 !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Seekbar: a chunky ink track with a yellow fill
+   -------------------------------------------------------------------------- */
+.su-player #seek .progress-bar-seek {
+  height: 8px !important;
+  border-radius: 0 !important;
+  background-color: var(--su-ink) !important;
+  box-shadow: 0 0 0 2px var(--su-ink);
+}
+
+.su-player #seek .progress-bar-fill,
+.su-player #seek .progress-bar-fill-preview {
+  height: 8px !important;
+  border-radius: 0 !important;
+}
+
+.su-player #wrapper .cs-brandhighlight-bg {
+  background: var(--su-yellow) !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Volume and playback speed popups: paper boxes with an ink line
+   -------------------------------------------------------------------------- */
+.su-player #volume .slider-bar {
+  border-radius: 0 !important;
+}
+
+/* The player draws its dark panel as an image here, on top of the background */
+.su-player #volume .slider-bar::before {
+  display: none !important;
+}
+
+.su-player #volume.open .slider-bar {
+  background: var(--su-paper) !important;
+  box-shadow: 0 0 0 var(--su-line) var(--su-ink), 4px 4px 0 var(--su-line) var(--su-ink);
+}
+
+.su-player #volume .volume-track {
+  border-radius: 0 !important;
+  background-color: var(--su-ink) !important;
+}
+
+.su-player #wrapper #volume .volume-progress {
+  border-radius: 0 !important;
+  background: var(--su-red) !important;
+}
+
+.su-player #wrapper #volume .volume-dot {
+  border-radius: 50% !important;
+  background: var(--su-yellow) !important;
+  box-shadow: 0 0 0 2px var(--su-ink);
+}
+
+.su-player #playback-speed .settings-panel {
+  border: var(--su-line) solid var(--su-ink) !important;
+  border-radius: 0 !important;
+  background-color: var(--su-paper) !important;
+  box-shadow: 4px 4px 0 var(--su-ink) !important;
+}
+
+.su-player #playback-speed .settings-panel .title {
+  font-family: var(--su-display) !important;
+  font-size: 17px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.05em;
+  color: var(--su-red) !important;
+}
+
+.su-player #playback-speed .menu-choice {
+  border-radius: 0;
+  font-family: var(--su-font) !important;
+  font-weight: 600;
+  color: var(--su-ink) !important;
+}
+
+.su-player #playback-speed .menu-choice:hover {
+  background-color: var(--su-yellow) !important;
+  color: var(--su-ink) !important;
+}
+
+/* The player's own shortcut tooltip */
+.su-player #tooltip {
+  border: 2px solid var(--su-ink) !important;
+  border-radius: 0 !important;
+  background: var(--su-paper) !important;
+  font-family: var(--su-font) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: var(--su-ink) !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Menu: a paper panel that punches in over the slide.
+   player.js toggles body.su-menu-open and keeps the player's own menu closed,
+   so opening it doesn't shrink the slide.
+   -------------------------------------------------------------------------- */
+.su-player #sidebar {
+  width: clamp(300px, 38%, 440px) !important;
+  max-width: 100%;
+  box-sizing: border-box;
+  border-right: 5px solid var(--su-ink);
+  background-color: var(--su-paper) !important;
+  font-family: var(--su-font) !important;
+  transition: transform var(--su-slow) var(--su-punch) !important;
+  z-index: 50 !important;
+}
+
+.su-player.sidebar-right #sidebar {
+  border-right: none;
+  border-left: 5px solid var(--su-ink);
+}
+
+/* The player fixes the panel's contents at a pixel width */
+.su-player #sidebar #tabs,
+.su-player #sidebar #sidebar-panels,
+.su-player #sidebar #sidebar-panels > *,
+.su-player #sidebar #outline-search-content,
+.su-player #sidebar #outline-content {
+  width: 100% !important;
+}
+
+.su-player #sidebar,
+.su-player #sidebar-panels,
+.su-player #sidebar-panels > *,
+.su-player #outline-content,
+.su-player #tabs {
+  background-image: none !important;
+}
+
+.su-player #sidebar-panels,
+.su-player #sidebar-panels > *,
+.su-player #outline-content {
+  background-color: transparent !important;
+}
+
+/* The ink line replaces the player's soft shadow along the edge */
+.su-player #wrapper #sidebar::after {
+  display: none !important;
+}
+
+/* Hidden off-screen until opened. The extra 12px clears the overshoot. */
+.su-player.sidebar-left #sidebar { transform: translateX(calc(-100% - 12px)) !important; }
+
+.su-player.sidebar-right #sidebar {
+  left: auto !important;
+  right: 0 !important;
+  transform: translateX(calc(100% + 12px)) !important;
+}
+
+.su-player.su-menu-open #sidebar { transform: translateX(0) !important; }
+
+/* The player hides the contents while it thinks the menu is closed */
+.su-player.su-menu-open #sidebar .view-content {
+  visibility: visible !important;
+}
+
+/* In mobile view it takes them out altogether */
+.su-player.su-menu-open #sidebar #tabs,
+.su-player.su-menu-open #sidebar #sidebar-panels {
+  display: block !important;
+}
+
+#su-menu-backdrop {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 49;
+  background: var(--su-backdrop, rgba(0, 0, 0, 0.6));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--su-slow);
+}
+
+.su-player.su-menu-open #su-menu-backdrop {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Tab header: part of the red masthead */
+.su-player #tabs {
+  border-bottom: 4px solid var(--su-ink) !important;
+  background-color: var(--su-red) !important;
+}
+
+.su-player #tabs .tab {
+  font-family: var(--su-display) !important;
+  font-size: 19px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.78) !important;
+  min-width: max-content;   /* The player sizes tabs for its own font */
+}
+
+.su-player #tabs .tab.cs-selected {
+  color: var(--su-white) !important;
+  text-shadow: 2px 2px 0 var(--su-ink);
+}
+
+.su-player #wrapper #tabs .tab::after {
+  height: 4px !important;
+  background: var(--su-yellow) !important;
+}
+
+/* Rows */
+.su-player #outline-content .listitem {
+  border-radius: 0 !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  font-family: var(--su-font) !important;
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  color: var(--su-ink) !important;
+  transition: background-color var(--su-fast);
+}
+
+.su-player #outline-content .listitem:not(.is-scene) {
+  padding-left: 16px !important;
+}
+
+.su-player #outline-content .listitem:hover {
+  background-color: rgba(255, 214, 10, 0.5) !important;
+  color: var(--su-ink) !important;
+}
+
+/* Page numbers, written by player.js */
+.su-player #outline-content .linkText[data-su-n]::before {
+  content: attr(data-su-n);
+  display: inline-block;
+  width: 34px;
+  font-family: var(--su-display);
+  font-size: 19px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--su-blue);
+}
+
+/* The player marks the focused row with a grey border */
+.su-player #wrapper .cs-listitem:hover {
+  border-color: transparent !important;
+}
+
+.su-player #wrapper .cs-listitem.hover {
+  border-color: var(--su-ink) !important;
+  border-radius: 0 !important;
+}
+
+/* Current slide */
+.su-player #outline-content .listitem.cs-selected {
+  background-color: var(--su-yellow) !important;
+  box-shadow: inset 6px 0 0 var(--su-red), inset 0 0 0 2px var(--su-ink);
+  color: var(--su-ink) !important;
+}
+
+.su-player #outline-content .listitem.cs-selected .linkText[data-su-n]::before {
+  color: var(--su-red);
+}
+
+/* Scene headers */
+.su-player #outline-content .listitem.is-scene {
+  font-family: var(--su-display) !important;
+  font-size: 20px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.05em;
+  color: var(--su-red) !important;
+}
+
+.su-player .item-collapsible:not(.item-collapsed) .is-scene {
+  color: var(--su-red) !important;
+}
+
+/* Scene chevron: right when collapsed, down when open, turning on its centre */
+.su-player #outline-content svg.carrot {
+  transform: none !important;
+  transform-origin: center !important;
+  transition: transform var(--su-slow) var(--su-punch);
+}
+
+.su-player #outline-content .item-collapsible:not(.item-collapsed) > .listitem svg.carrot {
+  transform: rotate(90deg) !important;
+}
+
+.su-player #outline-content svg.carrot,
+.su-player #outline-content svg.carrot * {
+  color: var(--su-red) !important;
+}
+
+.su-player #outline-content svg.check-icon,
+.su-player #outline-content svg.check-icon * {
+  color: var(--su-blue) !important;
+}
+
+/* Rows fly in, one after another, as the menu opens */
+@keyframes su-fly-in {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: none; }
+}
+
+.su-player.su-menu-open #outline-content .listitem {
+  animation: su-fly-in var(--su-slow) var(--su-punch) both;
+  animation-delay: calc(var(--su-i, 0) * 16ms + 60ms);
+}
+
+.su-player #outline-content {
+  scrollbar-color: var(--su-ink) transparent;
+  scrollbar-width: thin;
+}
+
+
+/* --------------------------------------------------------------------------
+   Menu button: three heavy bars that cross into an X
+   -------------------------------------------------------------------------- */
+.su-player #hamburger {
+  background-color: transparent !important;
+  color: var(--su-white);
+  transition: color var(--su-fast);
+}
+
+.su-player #hamburger:hover {
+  color: var(--su-yellow);
+}
+
+.su-player #hamburger .menu-icon-wrapper svg {
+  display: none;
+}
+
+/* Closed: just past the panel's edge, in the top bar. Allows for the ink line. */
+.su-player.sidebar-left #hamburger {
+  left: calc(100% + 17px) !important;
+  transform: none !important;
+}
+
+.su-player.sidebar-right #hamburger {
+  left: auto !important;
+  right: calc(100% + 17px) !important;
+  transform: none !important;
+}
+
+/* Open: inside the panel's top corner */
+.su-player.su-menu-open.sidebar-left #hamburger {
+  left: auto !important;
+  right: 8px !important;
+  z-index: 2;
+}
+
+.su-player.su-menu-open.sidebar-right #hamburger {
+  left: 8px !important;
+  right: auto !important;
+  z-index: 2;
+}
+
+/* The player's padding leaves no room for the icon, which pushes it off-centre */
+.su-player #hamburger .menu-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 0 !important;
+}
+
+/* Keyboard focus. The player's focus box is placed once, when focus lands, so it
+   stays behind when this button moves. The ring goes on the icon instead. */
+.su-player:has(#hamburger:focus) .tab-focus-box {
+  display: none !important;
+}
+
+.su-player.show-focus #hamburger:focus .su-menu-icon {
+  outline: 3px solid var(--su-yellow) !important;
+  outline-offset: 5px !important;
+}
+
+.su-menu-icon {
+  position: relative;
+  display: inline-block;
+  width: 22px;
+  height: 16px;
+  vertical-align: middle;
+  filter: drop-shadow(1px 1px 0 var(--su-ink));
+}
+
+.su-menu-icon span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: currentColor;
+  transition: transform var(--su-slow) var(--su-punch), top var(--su-slow) var(--su-punch), opacity var(--su-fast);
+}
+
+.su-menu-icon span:nth-child(1) { top: 0; }
+.su-menu-icon span:nth-child(2) { top: 6px; }
+.su-menu-icon span:nth-child(3) { top: 12px; }
+
+.su-player.su-menu-open .su-menu-icon span:nth-child(1) {
+  top: 6px;
+  transform: rotate(45deg);
+}
+
+.su-player.su-menu-open .su-menu-icon span:nth-child(2) {
+  opacity: 0;
+}
+
+.su-player.su-menu-open .su-menu-icon span:nth-child(3) {
+  top: 6px;
+  transform: rotate(-45deg);
+}
+
+
+/* --------------------------------------------------------------------------
+   Start and Resume screen: the comic's cover. And the loading dots.
+   -------------------------------------------------------------------------- */
+.su-player .mobile-start-overlay {
+  background-color: var(--su-blue) !important;
+  background-image: var(--su-dots), var(--su-rays) !important;
+  background-size: 11px 11px, 100% 100% !important;
+  font-family: var(--su-font) !important;
+}
+
+.su-player .mobile-start-course-title h1,
+.su-player .mobile-load-title {
+  font-family: var(--su-display) !important;
+  font-size: clamp(38px, 7vw, 76px) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.04em;
+  line-height: 1.05;
+  color: var(--su-yellow) !important;
+  text-shadow:
+    -2px -2px 0 var(--su-ink), 2px -2px 0 var(--su-ink),
+    -2px 2px 0 var(--su-ink), 2px 2px 0 var(--su-ink),
+    6px 6px 0 var(--su-red), 8px 8px 0 var(--su-ink);
+  rotate: -2deg;
+}
+
+/* Start and Resume: the same action block as Next */
+.su-player .mobile-start-overlay .mobile-start-resume-text button,
+.su-player .mobile-start-overlay button.start {
+  border: var(--su-line) solid var(--su-ink) !important;
+  border-radius: 0 !important;
+  background-color: var(--su-yellow) !important;
+  box-shadow: 5px 5px 0 var(--su-ink);
+  color: var(--su-ink) !important;
+  font-family: var(--su-display) !important;
+  font-size: 24px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.06em;
+  transition: background-color var(--su-fast), box-shadow var(--su-fast);
+}
+
+.su-player .mobile-start-overlay .mobile-start-resume-text button:hover,
+.su-player .mobile-start-overlay button.start:hover {
+  background-color: var(--su-white) !important;
+  box-shadow: 8px 8px 0 var(--su-ink);
+}
+
+/* The play triangle */
+.su-player .mobile-start-overlay .mobile-start-resume-text button::after {
+  border-left-color: var(--su-ink) !important;
+}
+
+.su-player .mobile-start-overlay .mobile-start-resume-text button:focus-visible,
+.su-player .mobile-start-overlay button.start:focus-visible,
+.su-player .mobile-start-overlay button.restart:focus-visible {
+  outline: 3px solid var(--su-white) !important;
+  outline-offset: 4px !important;
+}
+
+.su-player .mobile-start-overlay button.restart {
+  color: var(--su-white) !important;
+  transition: color var(--su-fast);
+}
+
+.su-player .mobile-start-overlay button.restart .restart-text {
+  font-family: var(--su-display) !important;
+  font-size: 18px !important;
+  letter-spacing: 0.06em;
+  color: inherit !important;
+  text-shadow: 2px 2px 0 var(--su-ink);
+}
+
+.su-player .mobile-start-overlay button.restart:hover {
+  color: var(--su-yellow) !important;
+}
+
+.su-player .mobile-loader-dot {
+  background-color: var(--su-yellow) !important;
+  box-shadow: 0 0 0 2px var(--su-ink);
+}
+
+
+/* --------------------------------------------------------------------------
+   Reduced motion: everything still works, nothing travels and no burst pops
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .su-player *,
+  .su-player *::before,
+  .su-player *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
