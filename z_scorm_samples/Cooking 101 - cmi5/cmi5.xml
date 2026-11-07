@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<courseStructure xmlns="https://w3id.org/xapi/profiles/cmi5/v1/CourseStructure.xsd">
+  <course id="https://learningdojo.ninja/xapi/cooking101">
+    <title>
+      <langstring lang="und">01 Cooking 101</langstring>
+    </title>
+    <description>
+      <langstring lang="und"></langstring>
+    </description>
+  </course>
+  <au id="https://learningdojo.ninja/xapi/cooking101/interaction" launchMethod="OwnWindow" moveOn="CompletedOrPassed">
+    <title>
+      <langstring lang="und">01 Cooking 101</langstring>
+    </title>
+    <description>
+      <langstring lang="und"></langstring>
+    </description>
+    <url>index_lms.html</url>
+  </au>
+</courseStructure>

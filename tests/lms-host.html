@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LMS Host Stub</title>
+<style>
+  html, body { margin: 0; height: 100%; font: 13px/1.4 system-ui, sans-serif; background: #f4f4f4; }
+  body { display: grid; grid-template-rows: auto 1fr auto; }
+  header, footer { padding: 6px 10px; background: #222; color: #eee; }
+  header a { color: #9cf; margin-right: 12px; }
+  iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+  #log { max-height: 140px; overflow: auto; white-space: pre; font: 11px ui-monospace, monospace; }
+</style>
+</head>
+<body>
+<header>
+  LMS stub &middot;
+  <a href="?pkg=Cooking 101 - SCORM 1.2">SCORM 1.2</a>
+  <a href="?pkg=Cooking 101 - SCORM 2004">SCORM 2004</a>
+  <a href="?pkg=Cooking 101 - cmi5">cmi5 (no LRS)</a>
+  <a href="#" onclick="localStorage.removeItem(key);location.reload();return false">Clear saved data</a>
+</header>
+<iframe id="course" title="Course"></iframe>
+<footer><div id="log"></div></footer>
+<script>
+/*
+  A minimal SCORM 1.2 and 2004 runtime for checking a skin inside a real
+  Storyline LMS publish (index_lms.html and its scormdriver.js), without an LMS.
+  Serve the repo root, then open /tests/lms-host.html?pkg=<package folder>.
+  Data persists in localStorage per package so Resume can be checked.
+  cmi5 needs an LRS, so that package loads with the driver's "no LMS" error;
+  it still shows whether the skin loads. Real reporting: use SCORM Cloud.
+*/
+const pkg = new URLSearchParams(location.search).get('pkg') || 'Cooking 101 - SCORM 1.2';
+const key = 'lms-stub:' + pkg;
+let data = {};
+try { data = JSON.parse(localStorage.getItem(key)) || {}; } catch (e) {}
+const save = () => { try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {} };
+const logEl = document.getElementById('log');
+const log = (s) => { logEl.textContent += s + '\n'; logEl.scrollTop = 1e9; };
+window.__lmsCalls = [];
+
+function runtime(names, defaults) {
+  const api = {};
+  const call = (n, fn) => (...a) => { const r = fn(...a); window.__lmsCalls.push(n); log(n + '(' + a.map(String).map(x => x.slice(0, 60)).join(', ') + ') -> ' + String(r).slice(0, 60)); return r; };
+  api[names.init] = call(names.init, () => 'true');
+  api[names.finish] = call(names.finish, () => { save(); return 'true'; });
+  api[names.get] = call(names.get, (k) => k in data ? data[k] : (defaults[k] ?? ''));
+  api[names.set] = call(names.set, (k, v) => { data[k] = String(v); save(); return 'true'; });
+  api[names.commit] = call(names.commit, () => { save(); return 'true'; });
+  api[names.err] = () => '0';
+  api[names.errStr] = () => 'No error';
+  api[names.diag] = () => '';
+  return api;
+}
+
+window.API = runtime(
+  { init: 'LMSInitialize', finish: 'LMSFinish', get: 'LMSGetValue', set: 'LMSSetValue', commit: 'LMSCommit', err: 'LMSGetLastError', errStr: 'LMSGetErrorString', diag: 'LMSGetDiagnostic' },
+  { 'cmi.core.lesson_status': 'not attempted', 'cmi.core.entry': data['cmi.suspend_data'] ? 'resume' : 'ab-initio', 'cmi.core.student_name': 'Stub, Learner', 'cmi.core.student_id': 'stub', 'cmi.core.lesson_mode': 'normal', 'cmi.core.credit': 'credit' });
+window.API_1484_11 = runtime(
+  { init: 'Initialize', finish: 'Terminate', get: 'GetValue', set: 'SetValue', commit: 'Commit', err: 'GetLastError', errStr: 'GetErrorString', diag: 'GetDiagnostic' },
+  { 'cmi.completion_status': 'unknown', 'cmi.entry': data['cmi.suspend_data'] ? 'resume' : 'ab-initio', 'cmi.learner_name': 'Stub, Learner', 'cmi.learner_id': 'stub', 'cmi.mode': 'normal', 'cmi.credit': 'credit' });
+
+document.title = 'LMS Host Stub: ' + pkg;
+document.getElementById('course').src = '../z_scorm_samples/' + encodeURIComponent(pkg) + '/index_lms.html';
+</script>
+</body>
+</html>

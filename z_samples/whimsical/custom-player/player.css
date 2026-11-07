@@ -8,6 +8,7 @@
    3. And this line just before </html>:
         <script src="custom-player/player.js"></script>
    Republishing from Storyline rewrites story.html, so repeat steps 1-3 after.
+   For a SCORM or cmi5 publish, see README.md.
 
    Why rotate/scale effects target inner elements: the player positions its
    controls with inline transforms, so transforming a control directly would

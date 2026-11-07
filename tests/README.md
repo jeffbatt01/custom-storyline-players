@@ -42,3 +42,7 @@ Each load checks that the skin's script started, that there are no errors, that 
 - **Scoring:** it never finishes a quiz or a course, so passing, failing and completion calls aren't exercised.
 - **Save counts:** it compares which driver functions get called, not how many times, because Storyline batches its saves on a timer and the counts vary even with no skin.
 - **Looks:** it measures positions and can't tell if something looks wrong.
+
+## LMS packages
+
+`lms-swap.sh <name>` puts a player into the SCORM 1.2, SCORM 2004 and cmi5 publishes in `z_scorm_samples/`, replacing the one there. `lms-host.html` runs those packages against a stub SCORM runtime: serve the repo root and open `/tests/lms-host.html`. See the LMS packages section of the root `CLAUDE.md`.
