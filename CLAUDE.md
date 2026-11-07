@@ -12,6 +12,7 @@ z_samples/<name>/               Full published Storyline course, used for previe
   story.html                    Links custom-player/player.css and player.js
   custom-player/                Copy of <name>-player/custom-player/
   html5/ mobile/ story_content/ Storyline output: don't edit
+tests/                          Test matrix for all players
 ```
 
 Current players:
@@ -69,6 +70,8 @@ Check each player on these before calling it done:
 - The menu at phone width, with a row tapped
 - Keyboard focus on the menu button, open and closed, and on the "Back to top" link
 
+Then run the test matrix, which loads each player across page counts from 1 to 1,000, course setups, phone view and Storyline's LMS mode. See [tests/README.md](tests/README.md). It measures rather than looks, and it can't stand in for a real SCORM publish, so it doesn't replace the checks above.
+
 ## Add a new player
 
 1. Create `<name>-player/custom-player/` with `player.js` and `player.css`. Every new player needs the mobile menu fix (see **Mobile view** below): if it has an overlay menu, restore `display` on `#tabs` and `#sidebar-panels` while it's open, and give `#tabs .tab` a `min-width: max-content`.
@@ -86,6 +89,7 @@ Check each player on these before calling it done:
    ```
 
 5. Add `z_samples/<name>/.claude/launch.json` with an unused port, and add the player to the table above.
+6. Add the player to the lists at the top of `tests/harness.html`.
 
 The folder names have to line up: `<name>-player` pairs with `z_samples/<name>`, and the sync check depends on that.
 
