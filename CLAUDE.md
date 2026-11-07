@@ -132,6 +132,7 @@ The folder names have to line up: `<name>-player` pairs with `z_samples/<name>`,
 - **Load order:** `player.css` must come after `output.min.css` so its rules win.
 - **Republishing:** publishing from Storyline rewrites `story.html`, so the two lines have to be added again. An LMS publish also rewrites `index_lms.html` and `imsmanifest.xml`. The step-by-step for applying a skin to a SCORM 1.2, SCORM 2004 or cmi5 package, including re-zipping, is in each player's `custom-player/README.md`.
 - **Inline transforms:** the player positions its controls with inline transforms, so transforming a control directly throws it out of place. Animate an inner `.view-content` or a pseudo-element instead.
+- **Animations:** animate `opacity`, never `visibility`. Safari can fail to repaint an element after a `visibility` animation, which left the Arcade menu's row titles blank. Chrome and headless WebKit don't show the bug, so they can't confirm it's gone.
 - **Re-rendering:** Storyline rebuilds parts of its UI when state changes (play/pause, volume, full screen). Anything injected into a control needs a `MutationObserver` to put it back.
 - **Timing:** the player UI doesn't exist when the script first runs. Wait for it before touching it, as `whenPlayerReady` does in `professional-player/custom-player/player.js`.
 - **Mobile view:** at phone width Storyline switches to `view-mobile`, which behaves differently:

@@ -275,7 +275,7 @@
   inset: 0;
 }
 
-.ar-step-b { visibility: hidden; }
+.ar-step-b { opacity: 0; }
 
 /* Standing still: a slow two-frame idle */
 .ar-hero { animation: ar-idle 1.2s steps(1) infinite; }
@@ -296,13 +296,13 @@
 }
 
 @keyframes ar-frame-a {
-  0%, 100% { visibility: visible; }
-  50% { visibility: hidden; }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 @keyframes ar-frame-b {
-  0%, 100% { visibility: hidden; }
-  50% { visibility: visible; }
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 
 /* "+1" floats up when a new gem lights */
@@ -765,10 +765,12 @@
   color: var(--ar-ink) !important;
 }
 
-/* Rows blink on, one after another, as the menu opens */
+/* Rows blink on, one after another, as the menu opens. This animates opacity,
+   not visibility: Safari can fail to repaint rows after a visibility
+   animation, leaving their text blank (seen in Safari on a file:// launch). */
 @keyframes ar-row-in {
-  from { visibility: hidden; }
-  to { visibility: visible; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .ar-player.ar-menu-open #outline-content .listitem {
