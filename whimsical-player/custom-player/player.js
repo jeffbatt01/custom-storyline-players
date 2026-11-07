@@ -144,10 +144,11 @@
     var center = Math.max(half + 8, Math.min(window.innerWidth - half - 8, wanted));
     /* Leaves room for the player's own tooltip, which also appears above a control */
     var above = box.top - 54;
-    /* Top-of-screen controls speak from underneath instead */
+    /* Top-of-screen controls speak from underneath instead. The player shows no
+       tooltip below them, so the bubble can sit close. */
     if (above - quip.offsetHeight < 4) {
       quip.style.translate = '-50% 0';
-      above = box.bottom + 54;
+      above = box.bottom + 6;
       quip.classList.add('is-below');
     }
     quip.style.left = center + 'px';

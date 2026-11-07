@@ -21,6 +21,9 @@ Current players:
 | Professional | `professional-player/` | `z_samples/professional/` | 8791 |
 | Whimsical | `whimsical-player/` | `z_samples/whimsical/` | 8000 |
 | Sleek | `sleek-player/` | `z_samples/sleek/` | 8792 |
+| Super | `super-player/` | `z_samples/super/` | 8793 |
+| Sunny | `sunny-player/` | `z_samples/sunny/` | 8794 |
+| Arcade | `arcade-player/` | `z_samples/arcade/` | 8795 |
 
 ## Keep the two copies in sync
 
@@ -64,10 +67,11 @@ Check each player on these before calling it done:
 - A slide with a seekbar and one without (in the sample course, slides 3 and 1)
 - A slide that hides the menu (slide 3)
 - The menu at phone width, with a row tapped
+- Keyboard focus on the menu button, open and closed, and on the "Back to top" link
 
 ## Add a new player
 
-1. Create `<name>-player/custom-player/` with `player.js` and `player.css`.
+1. Create `<name>-player/custom-player/` with `player.js` and `player.css`. Every new player needs the mobile menu fix (see **Mobile view** below): if it has an overlay menu, restore `display` on `#tabs` and `#sidebar-panels` while it's open, and give `#tabs .tab` a `min-width: max-content`.
 2. Copy the full published Storyline output to `z_samples/<name>/`.
 3. Sync the player into the sample with the command above.
 4. Add the two lines to `z_samples/<name>/story.html`:
@@ -98,6 +102,9 @@ The folder names have to line up: `<name>-player` pairs with `z_samples/<name>`,
   - An overlay menu must restore `display` on `#tabs` and `#sidebar-panels`, not just `visibility`, or it opens empty.
   - Tabs are sized for Storyline's own font, so a tab label in a wider font gets clipped without `min-width: max-content`.
 - **Start and Resume screen:** this is `.mobile-start-overlay`, on desktop too. It's outside `#wrapper`, and inline styles on it need `!important` to override.
-- **Prefixes:** keep each player's injected classes, IDs and CSS variables under its own prefix: `cp-` for Professional, `whimsy-` and `--w-` for Whimsical, `sl-` and `--sl-` for Sleek.
+- **Keyboard focus:** the player draws focus as its own `.tab-focus-box` element, not a CSS outline, so a CSS outline on controls gives a second ring. Style the box instead. It's placed once, when focus lands, so it stays behind on a control the skin moves. For the menu button, hide the box with `:has(#hamburger:focus)` and put the ring on the icon, scoped to `.show-focus`.
+- **Menu button:** its `.menu-icon-wrapper` has padding that leaves no room for a custom icon and pushes it off-centre. Remove the padding and centre the icon, and keep the open button clear of the panel's edge.
+- **Slide dimming:** the player sets `.slide-container` to 60% opacity while the "Back to top" link has focus, and `#slide` is transparent. A skin with art behind the slide needs a solid `background-color` on `#slide`, or the art shows through. On a light theme use a light colour, since slides may also fade over it.
+- **Prefixes:** keep each player's injected classes, IDs and CSS variables under its own prefix: `cp-` for Professional, `whimsy-` and `--w-` for Whimsical, `sl-` and `--sl-` for Sleek, `su-` and `--su-` for Super, `sun-` and `--sun-` for Sunny, `ar-` and `--ar-` for Arcade.
 - **Decoration only:** a skin must not change how a course navigates, scores or reports.
 - **Fonts:** both players load fonts from Google Fonts, so they need a system-font fallback for offline use.
