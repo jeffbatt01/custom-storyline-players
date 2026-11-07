@@ -7,6 +7,14 @@
   if (window.__whimsyPlayer) return;
   window.__whimsyPlayer = true;
 
+  /* Fonts load here, not from an @import in player.css. An @import holds up the
+     whole course while it waits, which can take 25 seconds or more on an LMS
+     network that blocks Google Fonts. Without them, player.css uses system faces. */
+  var fontLink = document.createElement('link');
+  fontLink.rel = 'stylesheet';
+  fontLink.href = 'https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap';
+  document.head.appendChild(fontLink);
+
   /* -----------------------------------------------------------------------
      Change these to change the personality
      ----------------------------------------------------------------------- */

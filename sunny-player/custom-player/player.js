@@ -11,6 +11,14 @@
      before the player draws. */
   document.body.classList.add('sun-player');
 
+  /* Fonts load here, not from an @import in player.css. An @import holds up the
+     whole course while it waits, which can take 25 seconds or more on an LMS
+     network that blocks Google Fonts. Without them, player.css uses system faces. */
+  var fontLink = document.createElement('link');
+  fontLink.rel = 'stylesheet';
+  fontLink.href = 'https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@700;800&display=swap';
+  document.head.appendChild(fontLink);
+
   /* What the sun says when it pops up on a new slide. Empty the list for no
      speech bubble. */
   var CHEERS = ['Hooray!', 'Nice one!', 'Yay!', 'Keep going!', 'Woohoo!', 'Great job!'];
@@ -423,6 +431,8 @@
     var slide = document.getElementById('slide');
     if (slide) new MutationObserver(schedule).observe(slide, { attributes: true, attributeFilter: ['style'] });
     window.addEventListener('resize', schedule);
+    /* Text gets wider or narrower when the real font replaces the fallback */
+    if (document.fonts) document.fonts.addEventListener('loadingdone', schedule);
     document.addEventListener('input', function (event) {
       if (event.target.closest && event.target.closest('#volume')) swapIcons();
     }, true);

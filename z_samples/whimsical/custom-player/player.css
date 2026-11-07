@@ -15,8 +15,8 @@
    pseudo-element instead.
    ========================================================================== */
 
-/* Needs internet. Without it, the font stack below falls back to a system face. */
-@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap");
+/* Fonts are loaded by player.js, not an @import here. Without them, the font
+   stacks below fall back to system faces. */
 
 /* --------------------------------------------------------------------------
    Change these to re-colour the whole skin

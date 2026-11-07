@@ -16,8 +16,8 @@
    transforms. Slanted shapes are pseudo-elements behind the control instead.
    ========================================================================== */
 
-/* Needs internet. Without it, the font stacks below fall back to system faces. */
-@import url("https://fonts.googleapis.com/css2?family=Bangers&family=Barlow+Condensed:wght@600;700&display=swap");
+/* Fonts are loaded by player.js, not an @import here. Without them, the font
+   stacks below fall back to system faces. */
 
 /* --------------------------------------------------------------------------
    Change these to re-theme the whole skin

@@ -12,6 +12,14 @@
      before the player draws. */
   document.body.classList.add('ar-player');
 
+  /* Fonts load here, not from an @import in player.css. An @import holds up the
+     whole course while it waits, which can take 25 seconds or more on an LMS
+     network that blocks Google Fonts. Without them, player.css uses system faces. */
+  var fontLink = document.createElement('link');
+  fontLink.rel = 'stylesheet';
+  fontLink.href = 'https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap';
+  document.head.appendChild(fontLink);
+
   /* Set to false to skip the "STAGE 3" banner over the slide on each new slide */
   var STAGE_BANNER = true;
 
@@ -568,6 +576,8 @@
     var slide = document.getElementById('slide');
     if (slide) new MutationObserver(schedule).observe(slide, { attributes: true, attributeFilter: ['style'] });
     window.addEventListener('resize', schedule);
+    /* Text gets wider or narrower when the real font replaces the fallback */
+    if (document.fonts) document.fonts.addEventListener('loadingdone', schedule);
     document.addEventListener('input', function (event) {
       if (event.target.closest && event.target.closest('#volume')) swapIcons();
     }, true);

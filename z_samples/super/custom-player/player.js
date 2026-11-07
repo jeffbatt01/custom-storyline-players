@@ -11,6 +11,14 @@
      before the player draws. */
   document.body.classList.add('su-player');
 
+  /* Fonts load here, not from an @import in player.css. An @import holds up the
+     whole course while it waits, which can take 25 seconds or more on an LMS
+     network that blocks Google Fonts. Without them, player.css uses system faces. */
+  var fontLink = document.createElement('link');
+  fontLink.rel = 'stylesheet';
+  fontLink.href = 'https://fonts.googleapis.com/css2?family=Bangers&family=Barlow+Condensed:wght@600;700&display=swap';
+  document.head.appendChild(fontLink);
+
   /* Words for the burst shown on each new slide. Empty the list to turn it off. */
   var SOUND_EFFECTS = ['POW!', 'ZAP!', 'BAM!', 'BOOM!', 'WHAM!', 'KAPOW!'];
 
@@ -311,13 +319,16 @@
       bar.appendChild(readout);
     }
 
-    meter.style.display = rows.length < 2 ? 'none' : '';
+    /* A very long course drops the bar rather than draw it in invisible slivers.
+       The readout still shows the page number. */
+    var roomy = rows.length >= 2 && bar.getBoundingClientRect().width / rows.length >= 4;
+    meter.style.display = roomy ? '' : 'none';
 
     var index = rows.findIndex(function (row) { return row.classList.contains('cs-selected'); });
     if (index < 0) index = Math.max(lastIndex, 0);
 
     if (rows.length) {
-      updateMeter(meter, rows, index);
+      if (roomy) updateMeter(meter, rows, index);
       setText(readout.querySelector('.su-count'), '<b>' + pad(index + 1) + '</b> of ' + pad(rows.length));
       var name = rows[index].getAttribute('data-slide-title') || '';
       var nameBox = readout.querySelector('.su-name');
@@ -378,6 +389,8 @@
     var slide = document.getElementById('slide');
     if (slide) new MutationObserver(schedule).observe(slide, { attributes: true, attributeFilter: ['style'] });
     window.addEventListener('resize', schedule);
+    /* Text gets wider or narrower when the real font replaces the fallback */
+    if (document.fonts) document.fonts.addEventListener('loadingdone', schedule);
     document.addEventListener('input', function (event) {
       if (event.target.closest && event.target.closest('#volume')) swapIcons();
     }, true);

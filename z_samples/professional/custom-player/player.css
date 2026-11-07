@@ -5,9 +5,8 @@
    Loaded after Storyline's own CSS, so equal-specificity rules win.
    ============================================================= */
 
-/* Learning Dojo fonts: Space Grotesk (labels, headings), DM Sans (body).
-   Without internet access the player falls back to system fonts. */
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Space+Grotesk:wght@500;600;700&display=swap");
+/* Fonts are loaded by player.js, not an @import here. Without them, the font
+   stacks below fall back to system faces. */
 
 /* ---- Player regions (uncomment / edit to customize) ----------
 
@@ -429,6 +428,11 @@
 .custom-player #sidebar #outline-search-content,
 .custom-player #sidebar #outline-content {
   width: 100% !important;
+}
+
+/* Otherwise a long list can scroll sideways as well */
+.custom-player #outline-content {
+  overflow-x: hidden !important;
 }
 
 /* Closed: menu button sits just past the panel's edge, in the top bar.
