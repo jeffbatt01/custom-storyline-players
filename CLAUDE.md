@@ -1,0 +1,103 @@
+# Custom Storyline Players
+
+Reusable skins for the Articulate Storyline 360 HTML5 player. Each player is a `player.js` and `player.css` that load on top of a published course. Storyline's own files are never edited, apart from the two lines added to `story.html`.
+
+## Structure
+
+```
+<name>-player/custom-player/    Source of truth: edit the player here
+  player.js
+  player.css
+z_samples/<name>/               Full published Storyline course, used for preview
+  story.html                    Links custom-player/player.css and player.js
+  custom-player/                Copy of <name>-player/custom-player/
+  html5/ mobile/ story_content/ Storyline output: don't edit
+```
+
+Current players:
+
+| Player | Source | Preview course | Port |
+|---|---|---|---|
+| Professional | `professional-player/` | `z_samples/professional/` | 8791 |
+| Whimsical | `whimsical-player/` | `z_samples/whimsical/` | 8000 |
+| Sleek | `sleek-player/` | `z_samples/sleek/` | 8792 |
+
+## Keep the two copies in sync
+
+Every edit goes in `<name>-player/custom-player/`. A Claude Code hook ([.claude/hooks/sync-player.sh](.claude/hooks/sync-player.sh)) copies each file Claude edits there to `z_samples/<name>/custom-player/`.
+
+The hook doesn't cover everything, so sync manually after any of these:
+
+- Edits made outside Claude Code, in your own editor
+- Files changed or added with a shell command
+- A player edited before its sample course existed
+
+```bash
+cp -R <name>-player/custom-player/. z_samples/<name>/custom-player/
+```
+
+Neither the hook nor this command removes files, so delete a removed file from both copies. The hook also only copies from source to sample. If a change was made in `z_samples/<name>/custom-player/` (a quick tweak during preview, say), copy it back to the source first, or the next sync will overwrite it.
+
+Check that all players match:
+
+```bash
+for d in *-player; do n=${d%-player}; diff -rq "$d/custom-player" "z_samples/$n/custom-player" && echo "$n in sync"; done
+```
+
+## Preview
+
+Serve the course from its sample folder, since `<name>-player/` has no `story.html`:
+
+```bash
+cd z_samples/<name> && python3 -m http.server <port>
+```
+
+Then open `http://localhost:<port>/story.html`. Each sample has a `.claude/launch.json` with the same server and port. It's picked up when the sample folder is the working directory, not from the repo root. In the desktop app, the preview launcher can fail with `Operation not permitted` under `~/Documents`. Start the server from the shell instead, then open the URL in the browser pane.
+
+Storyline remembers progress, so a reload usually lands on the Resume screen, which blocks clicks until you choose Resume or Restart.
+
+A plain reload can also keep using a cached `player.css` or `player.js`, which makes a working fix look like it failed. If a change doesn't show up, hard-refresh, then check that the rule is actually in the loaded stylesheet.
+
+Check each player on these before calling it done:
+
+- The Resume screen
+- A slide with a seekbar and one without (in the sample course, slides 3 and 1)
+- A slide that hides the menu (slide 3)
+- The menu at phone width, with a row tapped
+
+## Add a new player
+
+1. Create `<name>-player/custom-player/` with `player.js` and `player.css`.
+2. Copy the full published Storyline output to `z_samples/<name>/`.
+3. Sync the player into the sample with the command above.
+4. Add the two lines to `z_samples/<name>/story.html`:
+
+   ```html
+     <link rel="stylesheet" href="html5/data/css/output.min.css" data-noprefix/>
+     <link rel="stylesheet" href="custom-player/player.css"/>      <!-- add -->
+   </body>
+   <script src="html5/lib/scripts/bootstrapper.min.js"></script>
+   <script src="custom-player/player.js"></script>                 <!-- add -->
+   </html>
+   ```
+
+5. Add `z_samples/<name>/.claude/launch.json` with an unused port, and add the player to the table above.
+
+The folder names have to line up: `<name>-player` pairs with `z_samples/<name>`, and the sync check depends on that.
+
+## Working with the Storyline player
+
+- **Load order:** `player.css` must come after `output.min.css` so its rules win.
+- **Republishing:** publishing from Storyline rewrites `story.html`, so the two lines have to be added again. For an LMS publish, add them to `index_lms.html` too.
+- **Inline transforms:** the player positions its controls with inline transforms, so transforming a control directly throws it out of place. Animate an inner `.view-content` or a pseudo-element instead.
+- **Re-rendering:** Storyline rebuilds parts of its UI when state changes (play/pause, volume, full screen). Anything injected into a control needs a `MutationObserver` to put it back.
+- **Timing:** the player UI doesn't exist when the script first runs. Wait for it before touching it, as `whenPlayerReady` does in `professional-player/custom-player/player.js`.
+- **Mobile view:** at phone width Storyline switches to `view-mobile`, which behaves differently:
+  - The bars get separate `.top-ui-bg` background layers.
+  - Control containers such as `#nav-controls` report zero width, so measure the buttons instead.
+  - An overlay menu must restore `display` on `#tabs` and `#sidebar-panels`, not just `visibility`, or it opens empty.
+  - Tabs are sized for Storyline's own font, so a tab label in a wider font gets clipped without `min-width: max-content`.
+- **Start and Resume screen:** this is `.mobile-start-overlay`, on desktop too. It's outside `#wrapper`, and inline styles on it need `!important` to override.
+- **Prefixes:** keep each player's injected classes, IDs and CSS variables under its own prefix: `cp-` for Professional, `whimsy-` and `--w-` for Whimsical, `sl-` and `--sl-` for Sleek.
+- **Decoration only:** a skin must not change how a course navigates, scores or reports.
+- **Fonts:** both players load fonts from Google Fonts, so they need a system-font fallback for offline use.

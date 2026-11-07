@@ -319,6 +319,7 @@
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--ld-muted-fg) !important;
+  min-width: max-content;   /* Storyline sizes tabs for its own font */
 }
 
 .custom-player #tabs .tab.cs-selected {
@@ -480,6 +481,12 @@
 /* Storyline hides menu contents while it thinks the menu is closed */
 .custom-player.cp-menu-open #sidebar .view-content {
   visibility: visible !important;
+}
+
+/* In mobile view it takes them out altogether */
+.custom-player.cp-menu-open #sidebar #tabs,
+.custom-player.cp-menu-open #sidebar #sidebar-panels {
+  display: block !important;
 }
 
 /* Dims the slide behind the open menu; click to close */
